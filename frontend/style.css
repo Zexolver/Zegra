@@ -100,4 +100,7 @@
     border-radius: 6px;
     margin-bottom: 0.5rem;
   }
+  .hidden {
+    display: none;
+  }
   
