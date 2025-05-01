@@ -1,0 +1,103 @@
+/* style.css - Default theme for Zegra */
+
+:root {
+    --bg-color: #121212;
+    --text-color: #ffffff;
+    --accent-color: #1a73e8;
+    --sidebar-bg: #1e1e1e;
+    --card-bg: #222222;
+  }
+  
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    height: 100vh;
+  }
+  
+  #app {
+    display: flex;
+    width: 100%;
+  }
+  
+  .sidebar {
+    width: 220px;
+    background-color: var(--sidebar-bg);
+    padding: 1rem;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  nav ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  nav li {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.3s;
+  }
+  
+  nav li:hover, nav li.active {
+    background-color: var(--accent-color);
+    color: #fff;
+  }
+  
+  .main {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+  }
+  
+  .search {
+    padding: 0.5rem;
+    width: 250px;
+    border: none;
+    border-radius: 6px;
+  }
+  
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  
+  .game-card {
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  
+  .game-card:hover {
+    transform: scale(1.03);
+  }
+  
+  .game-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+  }
+  
