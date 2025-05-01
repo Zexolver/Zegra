@@ -2,15 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Zegra Launcher</title>
-
-  <!-- Load shared styles -->
-  <link rel="stylesheet" href="./style.css" />
-
-  <!-- Load layout and theme separately for modularity -->
-  <link rel="stylesheet" href="./layout/default.css" />
-  <link rel="stylesheet" href="./themes/default.css" />
+  <link rel="stylesheet" href="./themes/default.css">
+  <link rel="stylesheet" href="./layout/default.css">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <div id="app">
@@ -18,69 +14,47 @@
       <div class="logo">Zegra</div>
       <nav>
         <ul>
-          <li><a href="#home" class="nav-link">Home</a></li>
-          <li><a href="#library" class="nav-link">Library</a></li>
-          <li><a href="#store" class="nav-link">Store</a></li>
-          <li><a href="#settings" class="nav-link">Settings</a></li>
+          <li data-page="store" class="active">Store</li>
+          <li data-page="library">Library</li>
+          <li data-page="settings">Settings</li>
         </ul>
       </nav>
     </aside>
 
     <main class="main">
       <div class="header">
-        <input class="search" type="text" placeholder="Search games..." />
+        <input type="text" class="search" placeholder="Search games...">
       </div>
 
-      <section id="home" class="page-section">
-        <h2>Welcome to Zegra</h2>
-        <p>Your universal game launcher and manager.</p>
+      <!-- Store Page -->
+      <section id="store" class="page">
+        <h2>Store</h2>
+        <div class="game-grid">
+          <div class="game-card">
+            <img src="https://via.placeholder.com/180x100" alt="Game 1">
+            <p>Game 1</p>
+          </div>
+          <div class="game-card">
+            <img src="https://via.placeholder.com/180x100" alt="Game 2">
+            <p>Game 2</p>
+          </div>
+        </div>
       </section>
 
-      <section id="library" class="page-section">
+      <!-- Library Page -->
+      <section id="library" class="page hidden">
         <h2>Your Library</h2>
-        <div class="game-grid">
-          <div class="game-card">
-            <img src="https://via.placeholder.com/180x100" alt="Game" />
-            <p>Sample Game 1</p>
-          </div>
-          <div class="game-card">
-            <img src="https://via.placeholder.com/180x100" alt="Game" />
-            <p>Sample Game 2</p>
-          </div>
-        </div>
+        <p>Here you’ll see the games you've installed.</p>
       </section>
 
-      <section id="store" class="page-section">
-        <h2>Game Store</h2>
-        <div class="game-grid">
-          <div class="game-card">
-            <img src="https://via.placeholder.com/180x100" alt="Store Game" />
-            <p>Featured Game</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="settings" class="page-section">
+      <!-- Settings Page -->
+      <section id="settings" class="page hidden">
         <h2>Settings</h2>
-        <p>Customize your Zegra experience here.</p>
+        <p>Adjust launcher preferences, themes, account integrations, etc.</p>
       </section>
     </main>
   </div>
 
-  <style>
-    /* Basic CSS-only navigation with :target */
-    .page-section {
-      display: none;
-    }
-
-    .page-section:target {
-      display: block;
-    }
-
-    /* Default section if none is selected */
-    body:not(:has(:target)) #home {
-      display: block;
-    }
-  </style>
+  <script src="./main.js" defer></script>
 </body>
 </html>
