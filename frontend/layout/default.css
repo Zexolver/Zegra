@@ -1,0 +1,46 @@
+/* layout/default.css */
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    display: flex;
+    height: 100vh;
+  }
+  
+  #app {
+    display: flex;
+    width: 100%;
+  }
+  
+  .sidebar {
+    width: 220px;
+    padding: 1rem;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .main {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+  }
+  
+  .search {
+    width: 250px;
+  }
+  
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  
