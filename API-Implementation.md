@@ -1,10 +1,12 @@
 # Difficulty:
 
 ## Easiest:
- - [placeholder text]
+ - Itch.io
+ - GameJolt
 
 ## Intermediate
- - [placeholder text]
+ - Steam
 
 ## Hardest
- - [placeholder text]
+ - GOG
+ - Epic Games
