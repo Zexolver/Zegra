@@ -1,60 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zegra Launcher</title>
-  <link rel="stylesheet" href="./themes/default.css">
-  <link rel="stylesheet" href="./layout/default.css">
-  <link rel="stylesheet" href="./style.css">
-</head>
-<body>
-  <div id="app">
-    <aside class="sidebar">
-      <div class="logo">Zegra</div>
-      <nav>
-        <ul>
-          <li data-page="store" class="active">Store</li>
-          <li data-page="library">Library</li>
-          <li data-page="settings">Settings</li>
-        </ul>
-      </nav>
-    </aside>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zegra</title>
+    <link rel="stylesheet" href="themes/default.css" />
+    <link rel="stylesheet" href="layout/default.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="logo">Zegra</div>
+        <nav>
+          <ul>
+            <li data-page="library" class="active">Library</li>
+            <li data-page="store">Store</li>
+            <li data-page="mods">Mods</li>
+            <li data-page="settings">Settings</li>
+          </ul>
+        </nav>
+      </aside>
+      <main class="main">
+        <header class="header">
+          <input type="text" placeholder="Search games..." class="search" />
+        </header>
 
-    <main class="main">
-      <div class="header">
-        <input type="text" class="search" placeholder="Search games...">
-      </div>
-
-      <!-- Store Page -->
-      <section id="store" class="page">
-        <h2>Store</h2>
-        <div class="game-grid">
-          <div class="game-card">
-            <img src="https://via.placeholder.com/180x100" alt="Game 1">
-            <p>Game 1</p>
+        <!-- Page content sections -->
+        <section id="library" class="page-section">
+          <div class="game-grid">
+            <div class="game-card">
+              <img src="placeholder.jpg" alt="Game" />
+              <h3>Game Title</h3>
+            </div>
+            <div class="game-card">
+              <img src="placeholder.jpg" alt="Game" />
+              <h3>Another Game</h3>
+            </div>
           </div>
-          <div class="game-card">
-            <img src="https://via.placeholder.com/180x100" alt="Game 2">
-            <p>Game 2</p>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Library Page -->
-      <section id="library" class="page hidden">
-        <h2>Your Library</h2>
-        <p>Here you’ll see the games you've installed.</p>
-      </section>
+        <section id="store" class="page-section hidden">
+          <h2>Store</h2>
+          <p>Welcome to the Zegra Store!</p>
+        </section>
 
-      <!-- Settings Page -->
-      <section id="settings" class="page hidden">
-        <h2>Settings</h2>
-        <p>Adjust launcher preferences, themes, account integrations, etc.</p>
-      </section>
-    </main>
-  </div>
+        <section id="mods" class="page-section hidden">
+          <h2>Mods</h2>
+          <p>Manage and browse your mods here.</p>
+        </section>
 
-  <script src="./main.js" defer></script>
-</body>
+        <section id="settings" class="page-section hidden">
+          <h2>Settings</h2>
+          <p>Change your preferences here.</p>
+        </section>
+      </main>
+    </div>
+
+    <!-- Compiled JS from TypeScript -->
+    <script type="module" src="main.js"></script>
+  </body>
 </html>

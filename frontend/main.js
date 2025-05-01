@@ -1,24 +1,20 @@
-// main.js
-document.addEventListener("DOMContentLoaded", function () {
-    var navItems = document.querySelectorAll("nav li");
-    var pages = document.querySelectorAll(".page");
+document.querySelectorAll("nav li").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      // Remove 'active' from all
+      document.querySelectorAll("nav li").forEach((el) => el.classList.remove("active"));
+      tab.classList.add("active");
   
-    navItems.forEach(function (item) {
-      item.addEventListener("click", function () {
-        navItems.forEach(function (i) {
-          i.classList.remove("active");
-        });
-        item.classList.add("active");
-  
-        var target = item.getAttribute("data-page");
-        pages.forEach(function (page) {
-          if (page.id === target) {
-            page.classList.remove("hidden");
-          } else {
-            page.classList.add("hidden");
-          }
-        });
+      // Hide all sections
+      document.querySelectorAll(".page-section").forEach((section) => {
+        section.classList.add("hidden");
       });
+  
+      // Show selected section
+      const targetId = tab.getAttribute("data-page");
+      const targetSection = document.getElementById(targetId);
+      if (targetSection) {
+        targetSection.classList.remove("hidden");
+      }
     });
   });
   

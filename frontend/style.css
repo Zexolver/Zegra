@@ -100,7 +100,16 @@
     border-radius: 6px;
     margin-bottom: 0.5rem;
   }
-  .hidden {
-    display: none;
-  }
-  
+/* Shared behavior helpers */
+.hidden {
+  display: none !important;
+}
+
+.page-section {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
