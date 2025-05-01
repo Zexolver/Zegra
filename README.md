@@ -9,6 +9,7 @@ Zegra plans to take the following platforms for games and integrate them into it
  - GOG
  - Itch.io
  - GameJolt
+
 Zegra also plans to add support for using wine/proton on linux in a similar manner to how Steam or The Heroic Launcher does.
 
 Zegra will also eventually gain the ability for users to use their own CSS theme or layout file to customize their launcher. Not only that, but their will eventually be an API for plugins for the launcher as well.
@@ -20,9 +21,9 @@ Zegra will also eventually gain the ability for users to use their own CSS theme
 - ###### V3+: Too far ahead to plan any further.
 
 #### V1 Roadmap ideals:
-    Whichever platforms are easiest to integrate into the launcher will get added first. With the more difficult ones being worked on after the easiest of them.
+Whichever platforms are easiest to integrate into the launcher will get added first. With the more difficult ones being worked on after the easiest of them.
 
-    V1 is a means to get its raw and more basic components completed, integrated, and to make sure that they are in a stable state.
+V1 is a means to get its raw and more basic components completed, integrated, and to make sure that they are in a stable state.
 
 There will also be integration of platforms data, such as SteamDB or ModDB, and others for linux/Mac OS only, such as ProtonDB and WineDB.
 
