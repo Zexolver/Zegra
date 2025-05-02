@@ -1,63 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zegra</title>
-    <link rel="stylesheet" href="themes/default.css" />
-    <link rel="stylesheet" href="layout/default.css" />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div id="app">
-      <aside class="sidebar">
-        <div class="logo">Zegra</div>
-        <nav>
-          <ul>
-            <li data-page="library" class="active">Library</li>
-            <li data-page="store">Store</li>
-            <li data-page="mods">Mods</li>
-            <li data-page="settings">Settings</li>
-          </ul>
-        </nav>
-      </aside>
-      <main class="main">
-        <header class="header">
-          <input type="text" placeholder="Search games..." class="search" />
-        </header>
-
-        <!-- Page content sections -->
-        <section id="library" class="page-section">
-          <div class="game-grid">
-            <div class="game-card">
-              <img src="placeholder.jpg" alt="Game" />
-              <h3>Game Title</h3>
-            </div>
-            <div class="game-card">
-              <img src="placeholder.jpg" alt="Game" />
-              <h3>Another Game</h3>
-            </div>
-          </div>
-        </section>
-
-        <section id="store" class="page-section hidden">
-          <h2>Store</h2>
-          <p>Welcome to the Zegra Store!</p>
-        </section>
-
-        <section id="mods" class="page-section hidden">
-          <h2>Mods</h2>
-          <p>Manage and browse your mods here.</p>
-        </section>
-
-        <section id="settings" class="page-section hidden">
-          <h2>Settings</h2>
-          <p>Change your preferences here.</p>
-        </section>
-      </main>
-    </div>
-
-    <!-- Compiled JS from TypeScript -->
-    <script type="module" src="main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zegra</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="logo">Zegra</div>
+      <nav>
+        <ul>
+          <li class="active">Library</li>
+          <li>Store</li>
+          <li>Settings</li>
+        </ul>
+      </nav>
+    </aside>
+    <main class="main">
+      <header class="header">
+        <input type="text" placeholder="Search games..." class="search" />
+      </header>
+      <section class="game-grid">
+        <div class="game-card">
+          <img src="placeholder.jpg" alt="Game" />
+          <h3>Game Title</h3>
+        </div>
+        <div class="game-card">
+          <img src="placeholder.jpg" alt="Another Game" />
+          <h3>Another Game</h3>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="main.js"></script>
+</body>
 </html>
