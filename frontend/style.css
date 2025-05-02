@@ -1,4 +1,3 @@
-/* Default Theme for Zegra */
 :root {
   --bg-color: #121212;
   --text-color: #ffffff;
@@ -105,17 +104,4 @@ nav li.active {
   margin-top: 0.5rem;
   font-size: 1rem;
   font-weight: bold;
-}
-
-.game-card .button {
-  margin-top: 1rem;
-  background-color: var(--accent-color);
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.game-card .button:hover {
-  background-color: #155b99;
 }
