@@ -96,37 +96,63 @@ body {
   margin-bottom: 1rem;
 }
 
-.mods-actions {
+/* Mods tab: an embedded browser, not a form. The section itself becomes a
+   flex column so the embed area can fill all remaining vertical space. */
+.mods-view {
   display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.mods-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.mod-site-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mods-toolbar-actions {
+  display: flex;
+  align-items: flex-start;
   gap: 0.75rem;
-  margin: 1rem 0;
 }
 
-.mods-nxm-fieldset {
-  border-radius: var(--border-radius, 8px);
-  padding: 1rem;
-  max-width: 640px;
+.mods-advanced {
+  position: relative;
 }
 
-.mods-nxm-fieldset label {
-  display: block;
+.mods-advanced-panel {
+  position: absolute;
+  right: 0;
   margin-top: 0.5rem;
-  font-weight: bold;
+  padding: 1rem;
+  border-radius: var(--border-radius, 8px);
+  width: 380px;
+  z-index: 5;
 }
 
-.mods-nxm-fieldset input[type="text"] {
+.mods-advanced-panel input[type="text"] {
   width: 100%;
-  margin: 0.35rem 0 0.75rem;
+  margin: 0.5rem 0;
   padding: 0.5rem;
   font-family: inherit;
 }
 
 .nxm-log {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  max-width: 640px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .nxm-log-entry {
@@ -134,4 +160,32 @@ body {
   border-radius: var(--border-radius, 8px);
   font-size: 0.85rem;
   word-break: break-all;
+}
+
+/* The mod site itself opens in its own (parented) window, not embedded here
+   pixel-for-pixel — this panel just shows status text: which site is open,
+   that it's loading, or that embedded browsing isn't available outside the
+   desktop app. */
+.mods-webview-container {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--border-radius, 8px);
+  overflow: hidden;
+}
+
+.mods-status,
+#mods-embed-unavailable-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.mods-status.hidden,
+#mods-embed-unavailable-msg.hidden {
+  display: none;
 }

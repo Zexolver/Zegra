@@ -196,21 +196,64 @@ nav li.active {
   color: var(--danger-color);
 }
 
-.mods-nxm-fieldset {
+.mod-site-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--border-radius);
   background-color: var(--surface-color);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
-.mods-nxm-fieldset legend {
-  padding: 0 0.5rem;
-  font-weight: bold;
+.mod-site-tab:hover {
+  filter: brightness(1.15);
 }
 
-.mods-nxm-fieldset input {
+.mod-site-tab.active {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.btn-small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.mods-advanced summary {
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  cursor: pointer;
+  font-size: 0.8rem;
+  list-style: none;
+}
+
+.mods-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.mods-advanced-panel {
+  background-color: var(--surface-color);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.mods-advanced-panel input {
   background-color: var(--bg-color);
   color: var(--text-color);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
+}
+
+.mods-webview-container {
+  background-color: var(--surface-color);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mods-status,
+#mods-embed-unavailable-msg {
+  color: var(--text-muted);
 }
 
 .nxm-log-entry.nxm-log-ok {

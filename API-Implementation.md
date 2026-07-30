@@ -46,15 +46,33 @@ GameJolt does not expose anything usable for "list this user's games":
 
 Zegra reports this honestly in the UI (`platforms/gamejolt.rs`) instead of faking a library.
 
-## Nexus Mods / CurseForge (modding, V2) — done, via an embedded webview
+## Nexus Mods / CurseForge (modding, V2) — done, via a companion window
 
 An earlier version of this doc assumed modding support needed an official API partnership. That
-was wrong: **Nexus Mods and CurseForge are just websites**, and Tauri can open a real embedded
-webview window pointed at either one (`commands::open_mod_site`, using
-`tauri::WebviewWindowBuilder`). The user searches, logs in, and downloads exactly as they would in
-a normal browser tab — no scraping, no unofficial API, no partnership needed for that part. This
-was verified live: the embedded window genuinely loads `www.nexusmods.com` (Cloudflare bot-check
-and all, since it's real browser traffic hitting the real site).
+was wrong: **Nexus Mods and CurseForge are just websites**, and Tauri can open a real webview
+window pointed at either one. The user searches, logs in, and downloads exactly as they would in a
+normal browser tab — no scraping, no unofficial API, no partnership needed for that part. This was
+verified live: the window genuinely loads `www.nexusmods.com` (Cloudflare bot-check and all, since
+it's real browser traffic hitting the real site).
+
+That window is a separate, real OS window — parented to Zegra's main window via
+`WebviewWindowBuilder::parent()` — rather than content embedded pixel-for-pixel inside the Mods
+tab. That distinction matters and was a deliberate course-correction made *during* this work: the
+first implementation tried true inline embedding via Tauri's child-webview API
+(`Window::add_child`, gated behind the `unstable` cargo feature), and hands-on testing under Xvfb
+showed it doesn't work as hoped on Linux. Tracing through `tauri-runtime-wry`'s GTK backend
+(`default_vbox()` in `tauri-runtime-wry`, and `add_to_container` in `wry`) shows that on Linux,
+*every* child webview — regardless of the position/size passed to `add_child` — gets packed into
+the same vertical `GtkBox` that already holds the window's main content, via
+`gtk::Box::pack_start`. Only a `GtkFixed` container respects arbitrary x/y/width/height, and Tauri
+never uses one for this. In practice this meant the "embedded" browser ended up sharing space with
+the rest of the UI via box-packing (full window width, an arbitrary height, position always
+`(0, 0)`) instead of sitting inside the small placeholder area it was supposed to cover — confirmed
+by logging the webview's actual settled bounds and comparing them to what was requested. Given that,
+a parented companion window is the honest, actually-working way to deliver the UX goal (one click,
+no popup-juggling, remembers where you left off) on this platform today; see `commands.rs` for the
+`set_active_mod_site` command and `main.js`'s Mods section for the tab-switching/auto-open logic
+built around it.
 
 The one real wrinkle is specific to Nexus Mods: its "Mod Manager Download" buttons emit
 `nxm://{game_domain}/mods/{mod_id}/files/{file_id}?key={key}&expires={expires}&user_id={user_id}`
@@ -85,4 +103,4 @@ verified live, so the gap is specifically in the OS registration step, not the r
 | Steam      | Intermediate | Easy — well-documented local file formats         |
 | GOG        | Hardest   | Easy — same idea as Steam, simpler file format       |
 | Epic Games | Hardest   | Doable — via the community Legendary/Heroic format   |
-| Nexus Mods / CurseForge (modding) | Assumed to need an API partnership | Easy for browsing/downloading (embedded webview); `nxm://` handling adds real but manageable complexity |
+| Nexus Mods / CurseForge (modding) | Assumed to need an API partnership | Easy for browsing/downloading (companion window, no partnership needed); true inline embedding turned out not to work on Linux; `nxm://` handling adds real but manageable complexity |

@@ -24,6 +24,8 @@ function $all(selector) {
 
 // ---------- View / tab switching ----------
 
+let currentView = null;
+
 function initTabs() {
   $all("nav li[data-view]").forEach((item) => {
     item.addEventListener("click", () => switchView(item.dataset.view));
@@ -33,6 +35,9 @@ function initTabs() {
 }
 
 function switchView(view) {
+  const previousView = currentView;
+  currentView = view;
+
   $all("nav li[data-view]").forEach((item) => {
     item.classList.toggle("active", item.dataset.view === view);
   });
@@ -40,6 +45,19 @@ function switchView(view) {
     panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
   });
   localStorage.setItem("activeView", view);
+
+  if (view === "mods") {
+    // Auto-show the last-used (or default) mod site the moment this tab is
+    // opened — no "Open Nexus Mods" click required.
+    const site = activeModSite || localStorage.getItem("activeModSite") || "nexusmods";
+    showModSite(site);
+  } else if (previousView === "mods") {
+    // The mod-site window is a separate window, not embedded content, so it
+    // doesn't need to be hidden when leaving this tab the way a truly
+    // embedded webview would — but we still hide it so it doesn't linger on
+    // top of Zegra's main window while the user works in another tab.
+    hideAllModSites();
+  }
 }
 
 // ---------- Runtime badge ----------
@@ -267,6 +285,16 @@ function resetTheme() {
 
 // ---------- Mods ----------
 
+const MOD_SITE_LABELS = { nexusmods: "Nexus Mods", curseforge: "CurseForge" };
+
+// Which mod site (if any) is currently shown in the embedded webview, and
+// which ones have already finished loading once this session — so
+// switching back to a site already visited shows instantly, with no loading
+// overlay flash, since the backend just re-shows the same live webview
+// instead of navigating it again.
+let activeModSite = null;
+const modSitesLoadedOnce = new Set();
+
 function logNxmEvent(message, isError) {
   const log = $("#nxm-log");
   const entry = document.createElement("div");
@@ -282,16 +310,71 @@ function setNxmStatus(msg, isError) {
   el.classList.toggle("status-ok", !isError);
 }
 
-async function openModSite(site) {
+/**
+ * Shows `site` in its own window (creating it the first time, otherwise just
+ * re-showing/focusing the same one), so switching sites is instant and each
+ * site's logged-in session is preserved across visits. This is a real,
+ * separate OS window rather than content embedded pixel-for-pixel inside the
+ * Mods tab: on Linux, Tauri's child-webview positioning API turned out not
+ * to be reliably controllable (see `API-Implementation.md` for what testing
+ * that revealed), so a parented companion window is the honest, actually-
+ * working way to deliver "no popup-juggling, one click, remembers where you
+ * left off" here.
+ */
+async function showModSite(site) {
+  activeModSite = site;
+  localStorage.setItem("activeModSite", site);
+  $all(".mod-site-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.site === site);
+  });
+
+  const unavailableMsg = $("#mods-embed-unavailable-msg");
+  const status = $("#mods-status");
+  const label = MOD_SITE_LABELS[site] || site;
+
   if (!hasBackend) {
-    setNxmStatus("Cannot open an embedded browser — no backend available in this preview.", true);
+    unavailableMsg.classList.remove("hidden");
+    status.classList.add("hidden");
     return;
   }
+  unavailableMsg.classList.add("hidden");
+  status.classList.remove("hidden");
+  status.textContent = modSitesLoadedOnce.has(site)
+    ? `${label} is open in its own window.`
+    : `Opening ${label}…`;
+
   try {
-    await invoke("open_mod_site", { site });
+    await invoke("set_active_mod_site", { site });
+    modSitesLoadedOnce.add(site);
+    // Outside the real desktop runtime there's no "mod-site-loaded" event to
+    // wait for (see initModSiteLoadListener), so just settle the status now.
+    if (!TAURI) {
+      status.textContent = `${label} is open in its own window.`;
+    }
   } catch (err) {
-    setNxmStatus(`Failed to open ${site}: ${err}`, true);
+    setNxmStatus(`Failed to open ${label}: ${err}`, true);
+    status.textContent = `Couldn't open ${label}.`;
   }
+}
+
+/** Hides every mod-site window — called whenever the user navigates away from the Mods tab. */
+async function hideAllModSites() {
+  if (!hasBackend) return;
+  try {
+    await invoke("set_active_mod_site", { site: null });
+  } catch {
+    // Best-effort: nothing the user can act on if this fails.
+  }
+}
+
+/** Updates the status line once the real window reports its page finished loading. */
+function initModSiteLoadListener() {
+  if (!TAURI) return;
+  TAURI.event.listen("mod-site-loaded", (event) => {
+    if (event.payload === activeModSite) {
+      $("#mods-status").textContent = `${MOD_SITE_LABELS[event.payload] || event.payload} is open in its own window.`;
+    }
+  });
 }
 
 async function openDownloadsFolder() {
@@ -350,13 +433,15 @@ function init() {
   $("#settings-form").addEventListener("submit", saveSettings);
   $("#apply-theme-btn").addEventListener("click", applyCustomTheme);
   $("#reset-theme-btn").addEventListener("click", resetTheme);
-  $("#open-nexusmods-btn").addEventListener("click", () => openModSite("nexusmods"));
-  $("#open-curseforge-btn").addEventListener("click", () => openModSite("curseforge"));
+  $all(".mod-site-tab").forEach((tab) => {
+    tab.addEventListener("click", () => showModSite(tab.dataset.site));
+  });
   $("#open-downloads-btn").addEventListener("click", openDownloadsFolder);
   $("#resolve-nxm-btn").addEventListener("click", resolveNxmLink);
   loadSettingsIntoForm();
   applySavedThemeOnStartup();
   initNxmEventListener();
+  initModSiteLoadListener();
 }
 
 window.addEventListener("DOMContentLoaded", init);

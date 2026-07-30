@@ -74,7 +74,7 @@ pub fn run() {
             commands::scan_library,
             commands::load_custom_theme,
             commands::preview_theme,
-            commands::open_mod_site,
+            commands::set_active_mod_site,
             commands::open_downloads_folder,
             commands::resolve_and_open_nxm_link,
         ])

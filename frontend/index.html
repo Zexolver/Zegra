@@ -58,36 +58,39 @@
       </section>
 
       <!-- Mods view -->
-      <section class="view hidden" id="view-mods" data-view-panel="mods">
-        <header class="header">
-          <h2>Mods</h2>
-        </header>
-        <p class="empty-msg">
-          Nexus Mods and CurseForge are just websites — Zegra opens the real site in an embedded
-          browser window so you can search, log in, and download exactly as you would in a normal
-          browser. No scraping, no unofficial API.
-        </p>
-
-        <div class="mods-actions">
-          <button type="button" id="open-nexusmods-btn" class="btn btn-primary">Open Nexus Mods</button>
-          <button type="button" id="open-curseforge-btn" class="btn btn-primary">Open CurseForge</button>
-          <button type="button" id="open-downloads-btn" class="btn">Open downloads folder</button>
+      <section class="view mods-view hidden" id="view-mods" data-view-panel="mods">
+        <div class="mods-toolbar">
+          <div class="mod-site-tabs" role="tablist">
+            <button type="button" class="mod-site-tab" data-site="nexusmods" role="tab">Nexus Mods</button>
+            <button type="button" class="mod-site-tab" data-site="curseforge" role="tab">CurseForge</button>
+          </div>
+          <div class="mods-toolbar-actions">
+            <button type="button" id="open-downloads-btn" class="btn btn-small">Downloads folder</button>
+            <details class="mods-advanced">
+              <summary>Paste an nxm:// link</summary>
+              <div class="mods-advanced-panel">
+                <p class="hint">
+                  Nexus Mods' "Mod Manager Download" buttons normally launch Zegra directly once
+                  it's registered as the <code>nxm://</code> handler. If that hasn't kicked in yet
+                  (or you copied the link instead), paste it here. Requires a Nexus Mods API key in
+                  Settings.
+                </p>
+                <input type="text" id="nxm-link-input" placeholder="nxm://game/mods/123/files/456?key=...&expires=..." />
+                <button type="button" id="resolve-nxm-btn" class="btn">Resolve &amp; download</button>
+                <span id="nxm-status" class="status-msg" role="status"></span>
+                <div id="nxm-log" class="nxm-log" aria-live="polite"></div>
+              </div>
+            </details>
+          </div>
         </div>
 
-        <fieldset class="mods-nxm-fieldset">
-          <legend>Manual nxm:// link</legend>
-          <p class="hint">
-            Nexus Mods' "Mod Manager Download" buttons normally launch Zegra directly once it's
-            registered as the <code>nxm://</code> handler. If that hasn't kicked in yet (or you
-            copied the link instead), paste it here. Requires a Nexus Mods API key in Settings.
+        <div id="mods-webview-container" class="mods-webview-container">
+          <p id="mods-embed-unavailable-msg" class="empty-msg hidden">
+            Embedded browsing requires running inside the Zegra desktop app — this is a plain
+            browser preview with no backend.
           </p>
-          <label for="nxm-link-input">nxm:// link</label>
-          <input type="text" id="nxm-link-input" placeholder="nxm://game/mods/123/files/456?key=...&expires=..." />
-          <button type="button" id="resolve-nxm-btn" class="btn">Resolve &amp; download</button>
-          <span id="nxm-status" class="status-msg" role="status"></span>
-        </fieldset>
-
-        <div id="nxm-log" class="nxm-log" aria-live="polite"></div>
+          <div id="mods-status" class="mods-status hidden">Loading&hellip;</div>
+        </div>
       </section>
 
       <!-- Settings view -->

@@ -17,8 +17,9 @@ install and juggle Steam, GOG, the Epic launcher, itch.io, and more separately.
 - Real search/filter over the detected library
 - Custom user CSS theme loading, with live preview before saving
 - Per-platform extra scan-location configuration
-- Mods tab: embedded Nexus Mods/CurseForge browser windows, plus `nxm://` download-link handling
-  via the real Nexus Mods API (V2 work, started — see `API-Implementation.md`)
+- Mods tab: auto-opening Nexus Mods/CurseForge companion windows (parented to the main window),
+  plus `nxm://` download-link handling via the real Nexus Mods API (V2 work, started — see
+  `API-Implementation.md`)
 - Rust unit tests for every scanner/client, Playwright integration tests for the frontend
 
 ## 🛠 Planned Features

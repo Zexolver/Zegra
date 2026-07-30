@@ -23,9 +23,11 @@
 
 ## V2 — Modding support
 
-- [x] Nexus Mods + CurseForge browsing/downloading, via an embedded Tauri webview window pointed at
-      the real sites — no API partnership needed, verified live (the embedded window genuinely
-      loads nexusmods.com)
+- [x] Nexus Mods + CurseForge browsing/downloading, via a companion Tauri window (parented to the
+      main window) pointed at the real sites — no API partnership needed, verified live (the window
+      genuinely loads nexusmods.com). Opens automatically on entering the Mods tab and remembers the
+      last site used; true inline (pixel-embedded) browsing was attempted first but found not to
+      work on Linux — see `API-Implementation.md`
 - [x] `nxm://` link handling (Nexus Mods' "Mod Manager Download" buttons): OS protocol registration
       via `tauri-plugin-deep-link` + `tauri-plugin-single-instance`, resolved into real download
       URLs via the documented Nexus Mods API with a personal API key — resolution verified live

@@ -51,12 +51,16 @@ frontend (`frontend/`) — no game data is faked or mocked. What actually works 
   injected live into the app, plus a "preview before saving" flow.
 - **Extra scan locations** — non-default install drives can be added per-platform in Settings.
 - **Mods tab (V2, started)** — Nexus Mods and CurseForge are just websites, so Zegra opens the real
-  site in an embedded Tauri webview window; no scraping or unofficial API needed for browsing/
-  downloading. Nexus Mods' "Mod Manager Download" buttons additionally use `nxm://` links, which
-  Zegra can register itself as the OS handler for and resolve into real download URLs via a
-  personal Nexus API key (with a manual "paste the link" fallback in the UI either way). See
-  `API-Implementation.md` for exactly what's been verified live vs. what couldn't be exercised in
-  this sandboxed environment (OS-level protocol registration).
+  site in its own window (tied to Zegra's main window); no scraping or unofficial API needed for
+  browsing/downloading. Opening the Mods tab auto-opens the last site you used (no button click
+  needed), and switching between Nexus Mods/CurseForge just shows/focuses the same reused window
+  per site, so it's instant and keeps you logged in. Nexus Mods' "Mod Manager Download" buttons
+  additionally use `nxm://` links, which Zegra can register itself as the OS handler for and
+  resolve into real download URLs via a personal Nexus API key (with a manual "paste the link"
+  fallback in the UI either way). See `API-Implementation.md` for exactly what's been verified live
+  vs. what couldn't be exercised in this sandboxed environment (OS-level protocol registration) —
+  and for why this is a companion window rather than content embedded inside the tab itself (a real
+  Linux/Tauri limitation found while building this, not a design preference).
 
 What's intentionally *not* built yet, and why:
 

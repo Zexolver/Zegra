@@ -81,7 +81,7 @@ function mockInvokeInitScript({
       if (cmd === "save_settings") return null;
       if (cmd === "load_custom_theme") return ${JSON.stringify(themeCss ?? null)};
       if (cmd === "preview_theme") return ${JSON.stringify(themeCss ?? null)};
-      if (cmd === "open_mod_site") return null;
+      if (cmd === "set_active_mod_site") return null;
       if (cmd === "open_downloads_folder") return null;
       if (cmd === "resolve_and_open_nxm_link") {
         ${resolveNxmError ? `throw new Error(${JSON.stringify(resolveNxmError)});` : `return ${JSON.stringify(resolveNxmResult ?? null)};`}
@@ -260,28 +260,105 @@ test("applying a theme with an empty path shows an error instead of calling the 
   });
 });
 
-test("Mods tab: opening Nexus Mods and CurseForge calls open_mod_site with the right site", async (t) => {
+test("Mods tab: entering it auto-opens Nexus Mods, with no extra click needed", async (t) => {
   const initScript = mockInvokeInitScript({});
   await withPage(t, initScript, async (page) => {
     await page.click('nav li[data-view="mods"]');
     assert.equal(await page.isVisible("#view-mods"), true);
 
-    await page.click("#open-nexusmods-btn");
-    await page.click("#open-curseforge-btn");
-    await page.click("#open-downloads-btn");
+    // The site should open automatically — this is the whole point of the
+    // redesign: no "Open Nexus Mods" button click required.
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === "nexusmods")
+    );
+    assert.equal(await page.locator('.mod-site-tab[data-site="nexusmods"]').getAttribute("class"), "mod-site-tab active");
 
-    const calls = await page.evaluate(() => window.__zegraMockCalls.map((c) => [c.cmd, c.args]));
-    assert.deepEqual(
-      calls.filter(([cmd]) => cmd === "open_mod_site"),
-      [
-        ["open_mod_site", { site: "nexusmods" }],
-        ["open_mod_site", { site: "curseforge" }],
-      ]
+    const firstCall = await page.evaluate(() =>
+      window.__zegraMockCalls.find((c) => c.cmd === "set_active_mod_site")
     );
-    assert.deepEqual(
-      calls.filter(([cmd]) => cmd === "open_downloads_folder"),
-      [["open_downloads_folder", undefined]]
+    assert.equal(firstCall.args.site, "nexusmods");
+
+    const status = await page.textContent("#mods-status");
+    assert.match(status, /Nexus Mods is open in its own window/);
+  });
+});
+
+test("Mods tab: switching site tabs is a single click, and switches which tab is marked active", async (t) => {
+  const initScript = mockInvokeInitScript({});
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site")
     );
+
+    await page.click('.mod-site-tab[data-site="curseforge"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === "curseforge")
+    );
+
+    assert.match(
+      await page.locator('.mod-site-tab[data-site="curseforge"]').getAttribute("class"),
+      /active/
+    );
+    assert.doesNotMatch(
+      await page.locator('.mod-site-tab[data-site="nexusmods"]').getAttribute("class"),
+      /active/
+    );
+  });
+});
+
+test("Mods tab: leaving the tab hides the embedded webview, and returning restores the last site used", async (t) => {
+  const initScript = mockInvokeInitScript({});
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === "nexusmods")
+    );
+    await page.click('.mod-site-tab[data-site="curseforge"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === "curseforge")
+    );
+
+    // Navigating away must hide the (native, always-on-top) embedded webview.
+    await page.click('nav li[data-view="library"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === null)
+    );
+
+    // Coming back should remember CurseForge, not reset to the default.
+    await page.click('nav li[data-view="mods"]');
+    await page.waitForFunction(() => {
+      const calls = window.__zegraMockCalls.filter(
+        (c) => c.cmd === "set_active_mod_site" && c.args.site !== null
+      );
+      return calls.length >= 3;
+    });
+    const calls = await page.evaluate(() =>
+      window.__zegraMockCalls
+        .filter((c) => c.cmd === "set_active_mod_site")
+        .map((c) => c.args.site)
+    );
+    assert.equal(calls[calls.length - 1], "curseforge");
+  });
+});
+
+test("Mods tab: without a backend, shows a message instead of an embedded browser", async (t) => {
+  await withPage(t, null, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    const msg = await page.textContent("#mods-embed-unavailable-msg");
+    assert.match(msg, /requires running inside the Zegra desktop app/);
+  });
+});
+
+test("Mods tab: downloads folder button calls open_downloads_folder", async (t) => {
+  const initScript = mockInvokeInitScript({});
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.click("#open-downloads-btn");
+    const calls = await page.evaluate(() =>
+      window.__zegraMockCalls.filter((c) => c.cmd === "open_downloads_folder")
+    );
+    assert.equal(calls.length, 1);
   });
 });
 
@@ -291,6 +368,7 @@ test("Mods tab: resolving a pasted nxm:// link shows success and logs the resolv
   });
   await withPage(t, initScript, async (page) => {
     await page.click('nav li[data-view="mods"]');
+    await page.click(".mods-advanced summary");
     await page.fill(
       "#nxm-link-input",
       "nxm://skyrimspecialedition/mods/12345/files/67890?key=abc&expires=123"
@@ -322,6 +400,7 @@ test("Mods tab: a failed resolve shows the error and doesn't clear the input", a
   });
   await withPage(t, initScript, async (page) => {
     await page.click('nav li[data-view="mods"]');
+    await page.click(".mods-advanced summary");
     await page.fill("#nxm-link-input", "nxm://skyrim/mods/1/files/2");
     await page.click("#resolve-nxm-btn");
 
@@ -338,6 +417,7 @@ test("Mods tab: resolving with an empty link shows an error without calling the 
   const initScript = mockInvokeInitScript({});
   await withPage(t, initScript, async (page) => {
     await page.click('nav li[data-view="mods"]');
+    await page.click(".mods-advanced summary");
     await page.fill("#nxm-link-input", "");
     await page.click("#resolve-nxm-btn");
     const status = await page.textContent("#nxm-status");
