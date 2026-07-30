@@ -1,32 +1,14 @@
-:root {
-  --bg-color: #121212;
-  --text-color: #ffffff;
-  --accent-color: #1a73e8;
-  --sidebar-bg: #1e1e1e;
-  --card-bg: #222222;
-}
+/* style.css — visual styling built on top of themes/default.css tokens and
+   layout/default.css structure. */
 
 body {
-  margin: 0;
-  font-family: sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
-  display: flex;
-  height: 100vh;
-}
-
-#app {
-  display: flex;
-  width: 100%;
 }
 
 .sidebar {
-  width: 220px;
-  background-color: var(--sidebar-bg);
-  padding: 1rem;
+  background-color: var(--surface-color);
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
 }
 
 .logo {
@@ -39,13 +21,14 @@ body {
 nav ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 nav li {
   padding: 0.75rem 1rem;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.3s;
+  border-radius: var(--border-radius);
+  transition: background 0.2s;
 }
 
 nav li:hover,
@@ -54,31 +37,75 @@ nav li.active {
   color: #fff;
 }
 
-.main {
-  flex: 1;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  text-align: center;
+  width: 100%;
 }
 
-.header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
+.badge-ok {
+  background-color: var(--ok-color);
+  color: #062b12;
+}
+
+.badge-warn {
+  background-color: var(--warn-color);
+  color: #2b1f06;
+}
+
+.badge-unknown {
+  background-color: var(--text-muted);
+  color: #111;
 }
 
 .search {
   padding: 0.5rem;
-  width: 250px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  color: var(--text-color);
 }
 
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn:hover {
+  filter: brightness(1.15);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-color-hover);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid var(--text-muted);
+}
+
+.empty-msg {
+  color: var(--text-muted);
+  max-width: 60ch;
+  line-height: 1.5;
 }
 
 .game-card {
@@ -86,7 +113,8 @@ nav li.active {
   padding: 1rem;
   border-radius: 10px;
   text-align: center;
-  transition: transform 0.2s;
+  transition: transform 0.15s;
+  position: relative;
 }
 
 .game-card:hover {
@@ -96,12 +124,74 @@ nav li.active {
 .game-card img {
   width: 100%;
   height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
   border-radius: 6px;
   margin-bottom: 0.5rem;
+  background-color: #000;
 }
 
 .game-card h3 {
-  margin-top: 0.5rem;
+  margin: 0.25rem 0;
   font-size: 1rem;
   font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.platform-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.status-pill {
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--border-radius);
+  font-size: 0.85rem;
+  background-color: var(--surface-color);
+  border-left: 4px solid var(--text-muted);
+}
+
+.status-pill.status-unsupported {
+  border-left-color: var(--warn-color);
+}
+
+.status-pill.status-error {
+  border-left-color: var(--danger-color);
+}
+
+.settings-form fieldset {
+  background-color: var(--surface-color);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-form legend {
+  padding: 0 0.5rem;
+  font-weight: bold;
+}
+
+.settings-form .hint {
+  display: block;
+  font-weight: normal;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.settings-form input,
+.settings-form textarea {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+}
+
+.status-msg.status-ok {
+  color: var(--ok-color);
+}
+
+.status-msg.status-error {
+  color: var(--danger-color);
 }

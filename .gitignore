@@ -1,0 +1,12 @@
+# Rust build output
+/src-tauri/target/
+
+# Tauri auto-generated capability/ACL schemas (regenerated on every build)
+/src-tauri/gen/schemas/
+
+# Node (frontend test tooling)
+node_modules/
+
+# Editor/OS cruft
+.DS_Store
+*.log

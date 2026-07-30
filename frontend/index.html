@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zegra</title>
+  <link rel="stylesheet" href="themes/default.css" />
+  <link rel="stylesheet" href="layout/default.css" />
   <link rel="stylesheet" href="style.css" />
+  <style id="custom-theme"></style>
 </head>
 <body>
   <div id="app">
@@ -12,25 +15,93 @@
       <div class="logo">Zegra</div>
       <nav>
         <ul>
-          <li class="active">Library</li>
-          <li>Store</li>
-          <li>Settings</li>
+          <li class="active" data-view="library">Library</li>
+          <li data-view="store">Store</li>
+          <li data-view="settings">Settings</li>
         </ul>
       </nav>
+      <div class="sidebar-footer">
+        <span id="runtime-badge" class="badge badge-unknown">checking runtime&hellip;</span>
+      </div>
     </aside>
+
     <main class="main">
-      <header class="header">
-        <input type="text" placeholder="Search games..." class="search" />
-      </header>
-      <section class="game-grid">
-        <div class="game-card">
-          <img src="placeholder.jpg" alt="Game" />
-          <h3>Game Title</h3>
-        </div>
-        <div class="game-card">
-          <img src="placeholder.jpg" alt="Another Game" />
-          <h3>Another Game</h3>
-        </div>
+      <!-- Library view -->
+      <section class="view" id="view-library" data-view-panel="library">
+        <header class="header">
+          <input type="text" id="search-input" placeholder="Search your library&hellip;" class="search" />
+          <button id="scan-btn" class="btn btn-primary">Scan Library</button>
+        </header>
+
+        <div id="platform-status-bar" class="platform-status-bar" hidden></div>
+
+        <p id="library-empty-msg" class="empty-msg">
+          No games loaded yet. Click <strong>Scan Library</strong> to detect games installed via
+          Steam, GOG, Epic (Legendary/Heroic), and itch.io (if an API key is configured in Settings).
+        </p>
+
+        <section class="game-grid" id="game-grid"></section>
+      </section>
+
+      <!-- Store view -->
+      <section class="view hidden" id="view-store" data-view-panel="store">
+        <header class="header">
+          <h2>Store</h2>
+        </header>
+        <p class="empty-msg">
+          Storefront browsing (discovering new games to buy) isn't available yet. Doing that for
+          real requires official store-catalog access from Steam/Epic/GOG that Zegra doesn't have.
+          Zegra's Library tab can already show games you already own or have installed, using each
+          platform's local files or, for itch.io, your personal API key.
+        </p>
+      </section>
+
+      <!-- Settings view -->
+      <section class="view hidden" id="view-settings" data-view-panel="settings">
+        <header class="header">
+          <h2>Settings</h2>
+        </header>
+
+        <form id="settings-form" class="settings-form">
+          <fieldset>
+            <legend>itch.io</legend>
+            <label for="itchio-api-key">
+              API key
+              <span class="hint">
+                Generate one at
+                <code>itch.io/user/settings/api-keys</code>. Stored locally in your Zegra config
+                directory.
+              </span>
+            </label>
+            <input type="password" id="itchio-api-key" name="itchio_api_key" autocomplete="off" />
+          </fieldset>
+
+          <fieldset>
+            <legend>Extra scan locations</legend>
+            <p class="hint">One path per line. Useful for non-default install drives.</p>
+            <label for="extra-steam-roots">Additional Steam library roots</label>
+            <textarea id="extra-steam-roots" name="extra_steam_roots" rows="2"></textarea>
+
+            <label for="extra-gog-roots">Additional GOG install roots</label>
+            <textarea id="extra-gog-roots" name="extra_gog_roots" rows="2"></textarea>
+
+            <label for="extra-legendary-paths">Additional Legendary/Heroic <code>installed.json</code> paths</label>
+            <textarea id="extra-legendary-paths" name="extra_legendary_paths" rows="2"></textarea>
+          </fieldset>
+
+          <fieldset>
+            <legend>Appearance</legend>
+            <label for="custom-theme-path">Custom CSS theme file path (optional)</label>
+            <input type="text" id="custom-theme-path" name="custom_theme_path" placeholder="/home/me/my-zegra-theme.css" />
+            <button type="button" id="apply-theme-btn" class="btn">Apply theme</button>
+            <button type="button" id="reset-theme-btn" class="btn btn-secondary">Reset to default</button>
+          </fieldset>
+
+          <div class="settings-actions">
+            <button type="submit" class="btn btn-primary">Save settings</button>
+            <span id="settings-status" class="status-msg" role="status"></span>
+          </div>
+        </form>
       </section>
     </main>
   </div>

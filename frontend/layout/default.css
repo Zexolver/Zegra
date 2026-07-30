@@ -1,46 +1,97 @@
-/* layout/default.css */
+/* layout/default.css — structural layout only, no colors/theme values here. */
+
+* {
+  box-sizing: border-box;
+}
 
 body {
-    margin: 0;
-    font-family: sans-serif;
-    display: flex;
-    height: 100vh;
-  }
-  
-  #app {
-    display: flex;
-    width: 100%;
-  }
-  
-  .sidebar {
-    width: 220px;
-    padding: 1rem;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .main {
-    flex: 1;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-  }
-  
-  .header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1rem;
-  }
-  
-  .search {
-    width: 250px;
-  }
-  
-  .game-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1rem;
-  }
-  
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  height: 100vh;
+}
+
+#app {
+  display: flex;
+  width: 100%;
+}
+
+.sidebar {
+  width: 220px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+}
+
+.main {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.view.hidden {
+  display: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.search {
+  width: 280px;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.game-card.hidden {
+  display: none;
+}
+
+.settings-form fieldset {
+  border-radius: var(--border-radius, 8px);
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+}
+
+.settings-form label {
+  display: block;
+  margin-top: 0.75rem;
+  font-weight: bold;
+}
+
+.settings-form input[type="text"],
+.settings-form input[type="password"],
+.settings-form textarea {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 0.35rem;
+  padding: 0.5rem;
+  font-family: inherit;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.platform-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}

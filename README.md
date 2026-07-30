@@ -30,3 +30,48 @@ There will also be integration of platforms data, such as SteamDB or ModDB, and 
 Zegra also hopes to be the only launcher you need to install; It does not want to be like Cartridges where you still have to install the other launchers in order to play your games.
 
 There will also be plans (if research proves it to be possible) to include wallet integration, to allow for different wallets to pay for games, as well as supporting crypto, and possibly converting crypto into other means of money if needed to help pay for games.
+
+## Current status (V1)
+
+Zegra is now a real, working Tauri v2 desktop app (`src-tauri/`) with a plain HTML/CSS/JS
+frontend (`frontend/`) — no game data is faked or mocked. What actually works today:
+
+- **Steam** — reads `libraryfolders.vdf` and per-game `appmanifest_*.acf` files (the same
+  plain-text files Steam's own client uses), so Zegra can see installed games without any API key.
+- **GOG** — reads the `goggame-*.info` files GOG's installer places next to every game.
+- **Epic Games** — Epic has no Linux client or public "my library" API, so Zegra reads the
+  `installed.json` format used by [Legendary](https://github.com/derrod/legendary) and Heroic
+  Games Launcher instead — the standard community approach on Linux.
+- **itch.io** — uses itch.io's real, documented [server-side API](https://itch.io/docs/api/serverside)
+  (`/profile/owned-keys`) with a personal API key you generate yourself, no store partnership needed.
+- **GameJolt** — honestly reported as *unsupported*. GameJolt has no public API for listing a
+  user's owned/installed games (its Game API is scoped per-game via a private key, for
+  trophies/scores only), so Zegra says so in the UI instead of faking data.
+- **Custom themes** — Settings lets you point at any local `.css` file, which is validated and
+  injected live into the app, plus a "preview before saving" flow.
+- **Extra scan locations** — non-default install drives can be added per-platform in Settings.
+
+What's intentionally *not* built yet, and why:
+
+- **Storefront browsing** (discovering new games to buy) — needs official store-catalog access
+  from Steam/Epic/GOG that isn't available to third-party apps.
+- **Wine/Proton integration, SteamDB/ProtonDB/WineDB data** — not started.
+- **V2 modding (Curseforge, Nexus Mods), V2.5 Minecraft/Modrinth, plugin API, wallet/crypto
+  payments** — these need official API partnerships, SDKs, or legal/compliance work (payment
+  processing) beyond what a single pass on this codebase can responsibly stub out, so they remain
+  future work rather than faked integrations.
+
+See `Roadmap-Plan.md` for the itemized V1 checklist and `API-Implementation.md` for the
+per-platform integration notes.
+
+### Running it
+
+```sh
+cd src-tauri
+cargo run            # launches the desktop app
+cargo test            # runs the Rust unit test suite (scanners, settings, theme loader, itch.io client)
+```
+
+```sh
+node --test tests/frontend.test.mjs   # frontend integration tests (Playwright + a real Chromium)
+```

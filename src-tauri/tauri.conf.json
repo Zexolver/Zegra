@@ -1,53 +1,36 @@
 {
-    "build": {
-      "beforeBuildCommand": "",
-      "beforeDevCommand": "",
-      "devPath": "../frontend",        /* When running `tauri dev` */
-      "distDir": "../frontend"         /* When building for production */
-    },
-    "package": {
-      "productName": "Zegra",
-      "version": "0.1.0"
-    },
-    "tauri": {
-      "windows": [
-        {
-          "title": "Zegra",
-          "width": 1280,
-          "height": 720,
-          "resizable": true,
-          "fullscreen": false
-        }
-      ],
-      "security": {
-        "csp": null
-      },
-      "allowlist": {
-        "all": true
-      },
-      "bundle": {
-        "identifier": "com.yourname.zegra",
-        "icon": [
-          "icons/icon.icns",
-          "icons/icon.ico",
-          "icons/icon.png"
-        ],
-        "resources": [],
-        "externalBin": [],
-        "macOS": {
-          "entitlements": null,
-          "exceptionDomain": "",
-          "signingIdentity": null
-        },
-        "windows": {
-          "certificateThumbprint": null,
-          "digestAlgorithm": "sha256",
-          "timestampUrl": ""
-        },
-        "linux": {
-          "category": "Utility"
-        }
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Zegra",
+  "version": "0.1.0",
+  "identifier": "com.zexolver.zegra",
+  "build": {
+    "frontendDist": "../frontend"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Zegra",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
       }
+    ],
+    "security": {
+      "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ],
+    "category": "Game",
+    "shortDescription": "The ultimate game launcher",
+    "longDescription": "Zegra combines game libraries from Steam, GOG, Epic (via Legendary/Heroic), and itch.io into a single lightweight launcher."
   }
-  
+}

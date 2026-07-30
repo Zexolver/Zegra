@@ -1,52 +1,18 @@
-/* style.css */
+/* themes/default.css — Zegra's built-in default theme.
+   Custom user themes (loaded via Settings) simply override these
+   custom-property values and/or selectors; they're injected after this
+   stylesheet so they always win. */
 
-.logo {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-  
-  nav ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  nav li {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background 0.3s;
-  }
-  
-  nav li:hover,
-  nav li.active {
-    background-color: var(--accent-color);
-    color: #fff;
-  }
-  
-  .search {
-    padding: 0.5rem;
-    border: none;
-    border-radius: 6px;
-  }
-  
-  .game-card {
-    background-color: var(--card-bg);
-    padding: 1rem;
-    border-radius: 10px;
-    text-align: center;
-    transition: transform 0.2s;
-  }
-  
-  .game-card:hover {
-    transform: scale(1.03);
-  }
-  
-  .game-card img {
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
-  }
-  
+:root {
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --card-bg: #222222;
+  --text-color: #ffffff;
+  --text-muted: #a0a0a0;
+  --accent-color: #1a73e8;
+  --accent-color-hover: #3384ea;
+  --danger-color: #e05252;
+  --warn-color: #d8a34d;
+  --ok-color: #4caf6f;
+  --border-radius: 8px;
+}

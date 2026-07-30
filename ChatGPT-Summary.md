@@ -1,38 +1,41 @@
 # Zegra Launcher
 
-**Zegra** is a browser-based game launcher and store mockup designed to be lightweight, visually clean, and modular for expansion.
+**Zegra** is a cross-platform game launcher built on Tauri (Rust backend + a plain HTML/CSS/JS
+frontend), designed to be lightweight and modular for expansion.
 
 ## 🎯 Purpose
 
-Zegra is built as an educational + functional frontend experiment, designed to:
+Zegra combines game libraries from multiple platforms into one launcher, so players don't need to
+install and juggle Steam, GOG, the Epic launcher, itch.io, and more separately.
 
-- Simulate a PC game launcher (like Steam or Epic Games)
-- Offer a simple UI/UX for managing games and store content
-- Work entirely in-browser for now (school Chromebook-friendly)
-- Use **TypeScript/JavaScript, HTML, and CSS** (no external frameworks yet)
+## ✅ Current Features (V1)
 
-## ✅ Current Features
-
-- Sidebar with tabs: **Library**, **Store**, and **Settings**
-- Tab switching using `localStorage` for persistence
-- Game card modal popup on click
-- Responsive layout with clean, minimal UI
-- Can be edited/previewed on any device with a browser
+- Sidebar with tabs: **Library**, **Store**, and **Settings**, with real tab persistence
+- Local Steam, GOG, and Epic (via Legendary/Heroic) game detection — no fake/mock data
+- itch.io owned-games integration via a personal API key
+- GameJolt honestly reported as unsupported (no viable public API — see `API-Implementation.md`)
+- Real search/filter over the detected library
+- Custom user CSS theme loading, with live preview before saving
+- Per-platform extra scan-location configuration
+- Rust unit tests for every scanner/client, Playwright integration tests for the frontend
 
 ## 🛠 Planned Features
 
-- Search bar functionality
-- Game library population from external APIs
-- Integration with APIs (Itch.io, Game Jolt, possibly Steam or Epic)
-- Game install tracking (local only or with future backend)
-- Offline-friendly data caching and save persistence
+- Wine/Proton integration on Linux
+- SteamDB/ProtonDB/WineDB data integration
+- V2: Modding support (Curseforge, Nexus Mods) + plugin API
+- V2.5: Minecraft instance management + Modrinth integration
+- Storefront/catalog browsing (blocked on official store API access)
 
 ## 💡 Tech Stack
 
-- **HTML/CSS/JS (compiled from TS)**
-- Lightweight, framework-free
-- Optional: Compilable via [TypeScript playground](https://www.typescriptlang.org/play)
+- **Backend:** Rust + Tauri v2
+- **Frontend:** plain HTML/CSS/JS (no framework, no build step) — same file served both by the
+  desktop app and, for local frontend-only testing, a small static file server
+- **Tests:** `cargo test` for the backend, Playwright (driving real Chromium) for the frontend
 
 ## 📌 Notes
 
-This project is being developed using a Chromebook, and is designed to function without needing node/npm or a build system. All files are static and browser-runnable.
+The original prototype was a browser-only mockup with hardcoded placeholder cards; it has since
+been replaced by the real Tauri app described above, which actually detects installed games on
+the machine it runs on.
