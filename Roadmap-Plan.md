@@ -23,8 +23,15 @@
 
 ## V2 — Modding support
 
-- [ ] Curseforge integration (not started — needs an API key/partnership)
-- [ ] Nexus Mods integration (not started — needs an API key/partnership)
+- [x] Nexus Mods + CurseForge browsing/downloading, via an embedded Tauri webview window pointed at
+      the real sites — no API partnership needed, verified live (the embedded window genuinely
+      loads nexusmods.com)
+- [x] `nxm://` link handling (Nexus Mods' "Mod Manager Download" buttons): OS protocol registration
+      via `tauri-plugin-deep-link` + `tauri-plugin-single-instance`, resolved into real download
+      URLs via the documented Nexus Mods API with a personal API key — resolution verified live
+      against the real API; OS-level scheme registration itself couldn't be exercised in this
+      sandboxed container (no persistent desktop session, no `xdg-mime`) — see
+      `API-Implementation.md`
 - [ ] Plugin API for the launcher (not started)
 
 ## V2.5 — Minecraft

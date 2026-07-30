@@ -65,7 +65,13 @@ const FIXTURE_SETTINGS = {
 };
 
 /** Builds the init script string that defines window.__ZEGRA_TEST_INVOKE__. */
-function mockInvokeInitScript({ scanResult, settings, themeCss } = {}) {
+function mockInvokeInitScript({
+  scanResult,
+  settings,
+  themeCss,
+  resolveNxmResult,
+  resolveNxmError,
+} = {}) {
   return `
     window.__zegraMockCalls = [];
     window.__ZEGRA_TEST_INVOKE__ = async (cmd, args) => {
@@ -75,6 +81,11 @@ function mockInvokeInitScript({ scanResult, settings, themeCss } = {}) {
       if (cmd === "save_settings") return null;
       if (cmd === "load_custom_theme") return ${JSON.stringify(themeCss ?? null)};
       if (cmd === "preview_theme") return ${JSON.stringify(themeCss ?? null)};
+      if (cmd === "open_mod_site") return null;
+      if (cmd === "open_downloads_folder") return null;
+      if (cmd === "resolve_and_open_nxm_link") {
+        ${resolveNxmError ? `throw new Error(${JSON.stringify(resolveNxmError)});` : `return ${JSON.stringify(resolveNxmResult ?? null)};`}
+      }
       throw new Error("unmocked command: " + cmd);
     };
   `;
@@ -246,5 +257,117 @@ test("applying a theme with an empty path shows an error instead of calling the 
       window.__zegraMockCalls.filter((c) => c.cmd === "preview_theme")
     );
     assert.equal(previewCalls.length, 0);
+  });
+});
+
+test("Mods tab: opening Nexus Mods and CurseForge calls open_mod_site with the right site", async (t) => {
+  const initScript = mockInvokeInitScript({});
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    assert.equal(await page.isVisible("#view-mods"), true);
+
+    await page.click("#open-nexusmods-btn");
+    await page.click("#open-curseforge-btn");
+    await page.click("#open-downloads-btn");
+
+    const calls = await page.evaluate(() => window.__zegraMockCalls.map((c) => [c.cmd, c.args]));
+    assert.deepEqual(
+      calls.filter(([cmd]) => cmd === "open_mod_site"),
+      [
+        ["open_mod_site", { site: "nexusmods" }],
+        ["open_mod_site", { site: "curseforge" }],
+      ]
+    );
+    assert.deepEqual(
+      calls.filter(([cmd]) => cmd === "open_downloads_folder"),
+      [["open_downloads_folder", undefined]]
+    );
+  });
+});
+
+test("Mods tab: resolving a pasted nxm:// link shows success and logs the resolved URL", async (t) => {
+  const initScript = mockInvokeInitScript({
+    resolveNxmResult: "https://cdn.nexusmods.com/some-mod-file.zip",
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.fill(
+      "#nxm-link-input",
+      "nxm://skyrimspecialedition/mods/12345/files/67890?key=abc&expires=123"
+    );
+    await page.click("#resolve-nxm-btn");
+
+    await page.waitForFunction(() =>
+      document.getElementById("nxm-status").textContent.includes("Resolved and opened")
+    );
+    const logText = await page.textContent("#nxm-log");
+    assert.match(logText, /cdn\.nexusmods\.com\/some-mod-file\.zip/);
+
+    // The input clears after a successful resolve.
+    assert.equal(await page.inputValue("#nxm-link-input"), "");
+
+    const call = await page.evaluate(() =>
+      window.__zegraMockCalls.find((c) => c.cmd === "resolve_and_open_nxm_link")
+    );
+    assert.equal(
+      call.args.nxmUrl,
+      "nxm://skyrimspecialedition/mods/12345/files/67890?key=abc&expires=123"
+    );
+  });
+});
+
+test("Mods tab: a failed resolve shows the error and doesn't clear the input", async (t) => {
+  const initScript = mockInvokeInitScript({
+    resolveNxmError: "no Nexus Mods API key configured in Settings",
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.fill("#nxm-link-input", "nxm://skyrim/mods/1/files/2");
+    await page.click("#resolve-nxm-btn");
+
+    await page.waitForFunction(() =>
+      document.getElementById("nxm-status").textContent.includes("Failed to resolve link")
+    );
+    const status = await page.textContent("#nxm-status");
+    assert.match(status, /no Nexus Mods API key configured/);
+    assert.equal(await page.inputValue("#nxm-link-input"), "nxm://skyrim/mods/1/files/2");
+  });
+});
+
+test("Mods tab: resolving with an empty link shows an error without calling the backend", async (t) => {
+  const initScript = mockInvokeInitScript({});
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.fill("#nxm-link-input", "");
+    await page.click("#resolve-nxm-btn");
+    const status = await page.textContent("#nxm-status");
+    assert.match(status, /Paste an nxm:\/\/ link first/);
+    const calls = await page.evaluate(() =>
+      window.__zegraMockCalls.filter((c) => c.cmd === "resolve_and_open_nxm_link")
+    );
+    assert.equal(calls.length, 0);
+  });
+});
+
+test("Settings: Nexus API key field loads and round-trips on save", async (t) => {
+  const initScript = mockInvokeInitScript({
+    settings: { nexus_api_key: "existing-nexus-key" },
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="settings"]');
+    await page.waitForFunction(() => document.querySelector("#nexus-api-key").value.length > 0);
+    assert.equal(await page.inputValue("#nexus-api-key"), "existing-nexus-key");
+
+    await page.fill("#nexus-api-key", "new-nexus-key");
+    await page.click('#settings-form button[type="submit"]');
+    await page.waitForFunction(() =>
+      document.getElementById("settings-status").textContent.includes("saved")
+    );
+
+    const savedPayload = await page.evaluate(() => {
+      const call = window.__zegraMockCalls.find((c) => c.cmd === "save_settings");
+      return call.args.settings;
+    });
+    assert.equal(savedPayload.nexus_api_key, "new-nexus-key");
   });
 });

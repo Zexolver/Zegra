@@ -50,16 +50,23 @@ frontend (`frontend/`) — no game data is faked or mocked. What actually works 
 - **Custom themes** — Settings lets you point at any local `.css` file, which is validated and
   injected live into the app, plus a "preview before saving" flow.
 - **Extra scan locations** — non-default install drives can be added per-platform in Settings.
+- **Mods tab (V2, started)** — Nexus Mods and CurseForge are just websites, so Zegra opens the real
+  site in an embedded Tauri webview window; no scraping or unofficial API needed for browsing/
+  downloading. Nexus Mods' "Mod Manager Download" buttons additionally use `nxm://` links, which
+  Zegra can register itself as the OS handler for and resolve into real download URLs via a
+  personal Nexus API key (with a manual "paste the link" fallback in the UI either way). See
+  `API-Implementation.md` for exactly what's been verified live vs. what couldn't be exercised in
+  this sandboxed environment (OS-level protocol registration).
 
 What's intentionally *not* built yet, and why:
 
 - **Storefront browsing** (discovering new games to buy) — needs official store-catalog access
   from Steam/Epic/GOG that isn't available to third-party apps.
 - **Wine/Proton integration, SteamDB/ProtonDB/WineDB data** — not started.
-- **V2 modding (Curseforge, Nexus Mods), V2.5 Minecraft/Modrinth, plugin API, wallet/crypto
-  payments** — these need official API partnerships, SDKs, or legal/compliance work (payment
-  processing) beyond what a single pass on this codebase can responsibly stub out, so they remain
-  future work rather than faked integrations.
+- **V2.5 Minecraft/Modrinth, plugin API, wallet/crypto payments** — Minecraft/Modrinth and a plugin
+  API are plausible to build the same way modding was (no partnership required), just not done yet;
+  wallet/crypto payment support needs real payment-processor integration and compliance work this
+  codebase doesn't attempt.
 
 See `Roadmap-Plan.md` for the itemized V1 checklist and `API-Implementation.md` for the
 per-platform integration notes.

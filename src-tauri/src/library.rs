@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use crate::http_client::HttpClient;
 use crate::models::{Game, LibraryScanResult, Platform, PlatformScanResult, PlatformScanStatus};
 use crate::platforms::{epic, gamejolt, gog, itchio, steam};
 use crate::settings::Settings;
@@ -10,7 +11,7 @@ use crate::settings::Settings;
 /// (Steam/GOG/Epic) never fail outright — an unreadable/missing path is just
 /// "found nothing there" — but itch.io can fail (missing/invalid API key,
 /// network error) so its result is surfaced distinctly.
-pub fn scan_all(settings: &Settings, http_client: &dyn itchio::HttpClient) -> LibraryScanResult {
+pub fn scan_all(settings: &Settings, http_client: &dyn HttpClient) -> LibraryScanResult {
     let mut platform_results = Vec::new();
     let mut all_games: Vec<Game> = Vec::new();
 
@@ -93,11 +94,14 @@ pub fn scan_all(settings: &Settings, http_client: &dyn itchio::HttpClient) -> Li
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::platforms::itchio::HttpClient;
 
     struct NoopHttpClient;
     impl HttpClient for NoopHttpClient {
-        fn get_json(&self, _url: &str, _bearer_token: &str) -> Result<serde_json::Value, String> {
+        fn get_json(
+            &self,
+            _url: &str,
+            _headers: &[(&str, &str)],
+        ) -> Result<crate::http_client::HttpResponse, String> {
             Err("network disabled in test".to_string())
         }
     }

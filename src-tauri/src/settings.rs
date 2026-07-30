@@ -12,6 +12,8 @@ pub struct Settings {
     #[serde(default)]
     pub itchio_api_key: Option<String>,
     #[serde(default)]
+    pub nexus_api_key: Option<String>,
+    #[serde(default)]
     pub custom_theme_path: Option<String>,
     #[serde(default)]
     pub extra_steam_roots: Vec<String>,

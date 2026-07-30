@@ -9,6 +9,7 @@
 
 use serde::Deserialize;
 
+use crate::http_client::HttpClient;
 use crate::models::{Game, Platform};
 
 const API_BASE: &str = "https://api.itch.io";
@@ -24,51 +25,6 @@ pub enum ItchIoError {
     Api(String),
     #[error("could not parse itch.io response: {0}")]
     Parse(String),
-}
-
-/// Abstraction over "fetch JSON from a URL with a bearer token", so tests can
-/// supply canned responses instead of hitting the real network.
-pub trait HttpClient {
-    fn get_json(&self, url: &str, bearer_token: &str) -> Result<serde_json::Value, String>;
-}
-
-pub struct ReqwestClient {
-    client: reqwest::blocking::Client,
-}
-
-impl Default for ReqwestClient {
-    fn default() -> Self {
-        ReqwestClient {
-            client: reqwest::blocking::Client::builder()
-                .user_agent("Zegra/0.1 (+https://github.com/Zexolver/Zegra)")
-                .build()
-                .expect("failed to build HTTP client"),
-        }
-    }
-}
-
-impl HttpClient for ReqwestClient {
-    fn get_json(&self, url: &str, bearer_token: &str) -> Result<serde_json::Value, String> {
-        let resp = self
-            .client
-            .get(url)
-            .bearer_auth(bearer_token)
-            .send()
-            .map_err(|e| e.to_string())?;
-        let status = resp.status();
-        let body: serde_json::Value = resp.json().map_err(|e| e.to_string())?;
-        if !status.is_success() {
-            let msg = body
-                .get("errors")
-                .and_then(|e| e.as_array())
-                .and_then(|a| a.first())
-                .and_then(|v| v.as_str())
-                .unwrap_or("unknown error")
-                .to_string();
-            return Err(msg);
-        }
-        Ok(body)
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,6 +48,15 @@ struct ItchGame {
     url: Option<String>,
 }
 
+fn extract_error_message(body: &serde_json::Value) -> String {
+    body.get("errors")
+        .and_then(|e| e.as_array())
+        .and_then(|a| a.first())
+        .and_then(|v| v.as_str())
+        .unwrap_or("unknown error")
+        .to_string()
+}
+
 /// Fetches every game the authenticated user owns, following pagination until
 /// a page comes back with fewer than `PER_PAGE_HINT` entries.
 pub fn fetch_owned_games(
@@ -105,15 +70,20 @@ pub fn fetch_owned_games(
     let mut games = Vec::new();
     let mut seen_ids = std::collections::HashSet::new();
     let mut page = 1;
+    let auth_header = format!("Bearer {api_key}");
 
     loop {
         let url = format!("{API_BASE}/profile/owned-keys?page={page}");
-        let value = client
-            .get_json(&url, api_key)
+        let resp = client
+            .get_json(&url, &[("Authorization", &auth_header)])
             .map_err(|e| ItchIoError::Request(url.clone(), e))?;
 
+        if !(200..300).contains(&resp.status) {
+            return Err(ItchIoError::Api(extract_error_message(&resp.body)));
+        }
+
         let parsed: OwnedKeysResponse =
-            serde_json::from_value(value).map_err(|e| ItchIoError::Parse(e.to_string()))?;
+            serde_json::from_value(resp.body).map_err(|e| ItchIoError::Parse(e.to_string()))?;
 
         let count = parsed.owned_keys.len();
         for key in parsed.owned_keys {
@@ -147,6 +117,7 @@ pub fn fetch_owned_games(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::http_client::HttpResponse;
     use std::cell::RefCell;
     use std::collections::HashMap;
 
@@ -170,14 +141,18 @@ mod tests {
     }
 
     impl HttpClient for MockClient {
-        fn get_json(&self, url: &str, bearer_token: &str) -> Result<serde_json::Value, String> {
-            self.calls
-                .borrow_mut()
-                .push((url.to_string(), bearer_token.to_string()));
+        fn get_json(&self, url: &str, headers: &[(&str, &str)]) -> Result<HttpResponse, String> {
+            let auth = headers
+                .iter()
+                .find(|(name, _)| *name == "Authorization")
+                .map(|(_, v)| v.to_string())
+                .unwrap_or_default();
+            self.calls.borrow_mut().push((url.to_string(), auth));
             self.pages
                 .borrow()
                 .get(url)
                 .cloned()
+                .map(|body| HttpResponse { status: 200, body })
                 .ok_or_else(|| format!("unexpected url: {url}"))
         }
     }
@@ -206,6 +181,7 @@ mod tests {
         assert_eq!(games[0].id, "itchio:1");
         assert_eq!(games[0].name, "Celeste Classic");
         assert!(!games[0].installed);
+        assert_eq!(client.calls.borrow()[0].1, "Bearer test-key");
     }
 
     #[test]
@@ -232,11 +208,26 @@ mod tests {
     fn propagates_request_errors() {
         struct FailingClient;
         impl HttpClient for FailingClient {
-            fn get_json(&self, _url: &str, _bearer_token: &str) -> Result<serde_json::Value, String> {
+            fn get_json(&self, _url: &str, _headers: &[(&str, &str)]) -> Result<HttpResponse, String> {
                 Err("connection refused".to_string())
             }
         }
         let err = fetch_owned_games(&FailingClient, "key").unwrap_err();
         matches!(err, ItchIoError::Request(_, _));
+    }
+
+    #[test]
+    fn non_success_status_becomes_api_error() {
+        struct UnauthorizedClient;
+        impl HttpClient for UnauthorizedClient {
+            fn get_json(&self, _url: &str, _headers: &[(&str, &str)]) -> Result<HttpResponse, String> {
+                Ok(HttpResponse {
+                    status: 401,
+                    body: serde_json::json!({ "errors": ["invalid key"] }),
+                })
+            }
+        }
+        let err = fetch_owned_games(&UnauthorizedClient, "bad-key").unwrap_err();
+        assert_eq!(err, ItchIoError::Api("invalid key".to_string()));
     }
 }

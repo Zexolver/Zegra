@@ -46,6 +46,36 @@ GameJolt does not expose anything usable for "list this user's games":
 
 Zegra reports this honestly in the UI (`platforms/gamejolt.rs`) instead of faking a library.
 
+## Nexus Mods / CurseForge (modding, V2) — done, via an embedded webview
+
+An earlier version of this doc assumed modding support needed an official API partnership. That
+was wrong: **Nexus Mods and CurseForge are just websites**, and Tauri can open a real embedded
+webview window pointed at either one (`commands::open_mod_site`, using
+`tauri::WebviewWindowBuilder`). The user searches, logs in, and downloads exactly as they would in
+a normal browser tab — no scraping, no unofficial API, no partnership needed for that part. This
+was verified live: the embedded window genuinely loads `www.nexusmods.com` (Cloudflare bot-check
+and all, since it's real browser traffic hitting the real site).
+
+The one real wrinkle is specific to Nexus Mods: its "Mod Manager Download" buttons emit
+`nxm://{game_domain}/mods/{mod_id}/files/{file_id}?key={key}&expires={expires}&user_id={user_id}`
+links, which only do something if an app has registered itself as the OS's `nxm://` handler — that's
+what Vortex and Mod Organizer 2 do, and it's real, official Nexus Mods behavior (not a workaround).
+Zegra does the same via `tauri-plugin-deep-link` (+ `tauri-plugin-single-instance` with its
+`deep-link` feature, since Linux/Windows relaunch a second process for a claimed scheme rather than
+emitting an in-process event — see `src-tauri/src/lib.rs`). Resolving the link into a real
+downloadable URL uses the documented Nexus Mods API
+(`GET /v1/games/{domain}/mods/{id}/files/{file}/download_link.json`) with a personal API key from
+`nexusmods.com/users/myaccount?tab=api` (`platforms/nexus.rs`) — confirmed live against the real
+`api.nexusmods.com`, which correctly rejected a fake test key with "Please provide a valid API Key".
+CurseForge has no equivalent wrinkle; its downloads are just links on the page.
+
+**What isn't verified**: OS-level `nxm://` scheme registration itself (writing the `.desktop` file
+and running `xdg-mime`/`update-desktop-database`) couldn't be exercised end-to-end in the sandboxed
+container this was built in — it has no persistent desktop session for a real OS-level protocol
+handoff to be observed, and the container lacks `xdg-mime`. The manual "paste an nxm:// link" field
+on the Mods tab (`resolve_and_open_nxm_link`) exercises the exact same resolution code path and was
+verified live, so the gap is specifically in the OS registration step, not the resolution logic.
+
 ## Difficulty, in hindsight
 
 |            | Expected  | Actual                                              |
@@ -55,3 +85,4 @@ Zegra reports this honestly in the UI (`platforms/gamejolt.rs`) instead of fakin
 | Steam      | Intermediate | Easy — well-documented local file formats         |
 | GOG        | Hardest   | Easy — same idea as Steam, simpler file format       |
 | Epic Games | Hardest   | Doable — via the community Legendary/Heroic format   |
+| Nexus Mods / CurseForge (modding) | Assumed to need an API partnership | Easy for browsing/downloading (embedded webview); `nxm://` handling adds real but manageable complexity |

@@ -17,6 +17,7 @@
         <ul>
           <li class="active" data-view="library">Library</li>
           <li data-view="store">Store</li>
+          <li data-view="mods">Mods</li>
           <li data-view="settings">Settings</li>
         </ul>
       </nav>
@@ -56,6 +57,39 @@
         </p>
       </section>
 
+      <!-- Mods view -->
+      <section class="view hidden" id="view-mods" data-view-panel="mods">
+        <header class="header">
+          <h2>Mods</h2>
+        </header>
+        <p class="empty-msg">
+          Nexus Mods and CurseForge are just websites — Zegra opens the real site in an embedded
+          browser window so you can search, log in, and download exactly as you would in a normal
+          browser. No scraping, no unofficial API.
+        </p>
+
+        <div class="mods-actions">
+          <button type="button" id="open-nexusmods-btn" class="btn btn-primary">Open Nexus Mods</button>
+          <button type="button" id="open-curseforge-btn" class="btn btn-primary">Open CurseForge</button>
+          <button type="button" id="open-downloads-btn" class="btn">Open downloads folder</button>
+        </div>
+
+        <fieldset class="mods-nxm-fieldset">
+          <legend>Manual nxm:// link</legend>
+          <p class="hint">
+            Nexus Mods' "Mod Manager Download" buttons normally launch Zegra directly once it's
+            registered as the <code>nxm://</code> handler. If that hasn't kicked in yet (or you
+            copied the link instead), paste it here. Requires a Nexus Mods API key in Settings.
+          </p>
+          <label for="nxm-link-input">nxm:// link</label>
+          <input type="text" id="nxm-link-input" placeholder="nxm://game/mods/123/files/456?key=...&expires=..." />
+          <button type="button" id="resolve-nxm-btn" class="btn">Resolve &amp; download</button>
+          <span id="nxm-status" class="status-msg" role="status"></span>
+        </fieldset>
+
+        <div id="nxm-log" class="nxm-log" aria-live="polite"></div>
+      </section>
+
       <!-- Settings view -->
       <section class="view hidden" id="view-settings" data-view-panel="settings">
         <header class="header">
@@ -74,6 +108,19 @@
               </span>
             </label>
             <input type="password" id="itchio-api-key" name="itchio_api_key" autocomplete="off" />
+          </fieldset>
+
+          <fieldset>
+            <legend>Nexus Mods</legend>
+            <label for="nexus-api-key">
+              Personal API key
+              <span class="hint">
+                Generate one at
+                <code>nexusmods.com/users/myaccount?tab=api</code>. Needed to resolve
+                <code>nxm://</code> download links on the Mods tab.
+              </span>
+            </label>
+            <input type="password" id="nexus-api-key" name="nexus_api_key" autocomplete="off" />
           </fieldset>
 
           <fieldset>

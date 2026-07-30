@@ -181,6 +181,7 @@ async function loadSettingsIntoForm() {
   try {
     const settings = await invoke("get_settings");
     $("#itchio-api-key").value = settings.itchio_api_key || "";
+    $("#nexus-api-key").value = settings.nexus_api_key || "";
     $("#custom-theme-path").value = settings.custom_theme_path || "";
     $("#extra-steam-roots").value = arrayToLines(settings.extra_steam_roots);
     $("#extra-gog-roots").value = arrayToLines(settings.extra_gog_roots);
@@ -193,6 +194,7 @@ async function loadSettingsIntoForm() {
 function readSettingsFromForm() {
   return {
     itchio_api_key: $("#itchio-api-key").value.trim() || null,
+    nexus_api_key: $("#nexus-api-key").value.trim() || null,
     custom_theme_path: $("#custom-theme-path").value.trim() || null,
     extra_steam_roots: linesToArray($("#extra-steam-roots").value),
     extra_gog_roots: linesToArray($("#extra-gog-roots").value),
@@ -263,6 +265,81 @@ function resetTheme() {
   setSettingsStatus("Theme reset to default.", false);
 }
 
+// ---------- Mods ----------
+
+function logNxmEvent(message, isError) {
+  const log = $("#nxm-log");
+  const entry = document.createElement("div");
+  entry.className = isError ? "nxm-log-entry nxm-log-error" : "nxm-log-entry nxm-log-ok";
+  entry.textContent = message;
+  log.prepend(entry);
+}
+
+function setNxmStatus(msg, isError) {
+  const el = $("#nxm-status");
+  el.textContent = msg;
+  el.classList.toggle("status-error", !!isError);
+  el.classList.toggle("status-ok", !isError);
+}
+
+async function openModSite(site) {
+  if (!hasBackend) {
+    setNxmStatus("Cannot open an embedded browser — no backend available in this preview.", true);
+    return;
+  }
+  try {
+    await invoke("open_mod_site", { site });
+  } catch (err) {
+    setNxmStatus(`Failed to open ${site}: ${err}`, true);
+  }
+}
+
+async function openDownloadsFolder() {
+  if (!hasBackend) {
+    setNxmStatus("Cannot open the downloads folder — no backend available in this preview.", true);
+    return;
+  }
+  try {
+    await invoke("open_downloads_folder");
+  } catch (err) {
+    setNxmStatus(`Failed to open downloads folder: ${err}`, true);
+  }
+}
+
+async function resolveNxmLink() {
+  const nxmUrl = $("#nxm-link-input").value.trim();
+  if (!hasBackend) {
+    setNxmStatus("Cannot resolve links — no backend available in this preview.", true);
+    return;
+  }
+  if (!nxmUrl) {
+    setNxmStatus("Paste an nxm:// link first.", true);
+    return;
+  }
+  const btn = $("#resolve-nxm-btn");
+  btn.disabled = true;
+  try {
+    const resolvedUrl = await invoke("resolve_and_open_nxm_link", { nxmUrl });
+    setNxmStatus("Resolved and opened.", false);
+    logNxmEvent(`Resolved: ${resolvedUrl}`, false);
+    $("#nxm-link-input").value = "";
+  } catch (err) {
+    setNxmStatus(`Failed to resolve link: ${err}`, true);
+    logNxmEvent(`Error: ${err}`, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/** Listens for automatic nxm:// deep-link handling (real OS-level clicks), when running under the real Tauri runtime. */
+function initNxmEventListener() {
+  if (!TAURI) return;
+  TAURI.event.listen("nxm-download-result", (event) => {
+    const message = event.payload;
+    logNxmEvent(message, message.startsWith("error:"));
+  });
+}
+
 // ---------- Wiring ----------
 
 function init() {
@@ -273,8 +350,13 @@ function init() {
   $("#settings-form").addEventListener("submit", saveSettings);
   $("#apply-theme-btn").addEventListener("click", applyCustomTheme);
   $("#reset-theme-btn").addEventListener("click", resetTheme);
+  $("#open-nexusmods-btn").addEventListener("click", () => openModSite("nexusmods"));
+  $("#open-curseforge-btn").addEventListener("click", () => openModSite("curseforge"));
+  $("#open-downloads-btn").addEventListener("click", openDownloadsFolder);
+  $("#resolve-nxm-btn").addEventListener("click", resolveNxmLink);
   loadSettingsIntoForm();
   applySavedThemeOnStartup();
+  initNxmEventListener();
 }
 
 window.addEventListener("DOMContentLoaded", init);

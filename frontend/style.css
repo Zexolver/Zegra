@@ -195,3 +195,30 @@ nav li.active {
 .status-msg.status-error {
   color: var(--danger-color);
 }
+
+.mods-nxm-fieldset {
+  background-color: var(--surface-color);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mods-nxm-fieldset legend {
+  padding: 0 0.5rem;
+  font-weight: bold;
+}
+
+.mods-nxm-fieldset input {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+}
+
+.nxm-log-entry.nxm-log-ok {
+  background-color: var(--surface-color);
+  border-left: 4px solid var(--ok-color);
+}
+
+.nxm-log-entry.nxm-log-error {
+  background-color: var(--surface-color);
+  border-left: 4px solid var(--danger-color);
+}

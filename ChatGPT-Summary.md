@@ -10,20 +10,22 @@ install and juggle Steam, GOG, the Epic launcher, itch.io, and more separately.
 
 ## ✅ Current Features (V1)
 
-- Sidebar with tabs: **Library**, **Store**, and **Settings**, with real tab persistence
+- Sidebar with tabs: **Library**, **Store**, **Mods**, and **Settings**, with real tab persistence
 - Local Steam, GOG, and Epic (via Legendary/Heroic) game detection — no fake/mock data
 - itch.io owned-games integration via a personal API key
 - GameJolt honestly reported as unsupported (no viable public API — see `API-Implementation.md`)
 - Real search/filter over the detected library
 - Custom user CSS theme loading, with live preview before saving
 - Per-platform extra scan-location configuration
+- Mods tab: embedded Nexus Mods/CurseForge browser windows, plus `nxm://` download-link handling
+  via the real Nexus Mods API (V2 work, started — see `API-Implementation.md`)
 - Rust unit tests for every scanner/client, Playwright integration tests for the frontend
 
 ## 🛠 Planned Features
 
 - Wine/Proton integration on Linux
 - SteamDB/ProtonDB/WineDB data integration
-- V2: Modding support (Curseforge, Nexus Mods) + plugin API
+- V2: plugin API for the launcher
 - V2.5: Minecraft instance management + Modrinth integration
 - Storefront/catalog browsing (blocked on official store API access)
 
