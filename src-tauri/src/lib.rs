@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod http_client;
 pub mod library;
+pub mod mod_sites;
 pub mod models;
 pub mod platforms;
 pub mod settings;

@@ -21,6 +21,21 @@ pub struct Settings {
     pub extra_gog_roots: Vec<String>,
     #[serde(default)]
     pub extra_legendary_paths: Vec<String>,
+    /// Mod sites the user has added beyond the built-in Nexus Mods/CurseForge
+    /// ones (e.g. ModDB, GameBanana, Thunderstore, Modrinth, or any other
+    /// modding site), shown as extra tabs on the Mods tab.
+    #[serde(default)]
+    pub custom_mod_sites: Vec<CustomModSite>,
+}
+
+/// A user-added modding site: `id` is a short slug used internally (as the
+/// window label and to match the Mods tab's tab button to it), `name` is
+/// what's shown on the tab, and `url` is where it opens.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CustomModSite {
+    pub id: String,
+    pub name: String,
+    pub url: String,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -31,6 +46,8 @@ pub enum SettingsError {
     Write(String),
     #[error("failed to parse settings file: {0}")]
     Parse(String),
+    #[error("invalid settings: {0}")]
+    Validation(String),
 }
 
 fn settings_file_path(config_dir: &Path) -> PathBuf {
@@ -50,8 +67,11 @@ pub fn load(config_dir: &Path) -> Result<Settings, SettingsError> {
 }
 
 /// Writes settings to `<config_dir>/settings.json`, creating the config
-/// directory if necessary.
+/// directory if necessary. Rejects invalid custom mod sites (bad/non-http
+/// URLs, empty names, id collisions) rather than silently persisting them.
 pub fn save(config_dir: &Path, settings: &Settings) -> Result<(), SettingsError> {
+    crate::mod_sites::validate_all(&settings.custom_mod_sites)
+        .map_err(|e| SettingsError::Validation(e.to_string()))?;
     std::fs::create_dir_all(config_dir).map_err(|e| SettingsError::Write(e.to_string()))?;
     let path = settings_file_path(config_dir);
     let contents =
@@ -81,6 +101,36 @@ mod tests {
         save(dir.path(), &settings).unwrap();
         let loaded = load(dir.path()).unwrap();
         assert_eq!(loaded, settings);
+    }
+
+    #[test]
+    fn save_roundtrips_custom_mod_sites() {
+        let dir = tempdir().unwrap();
+        let mut settings = Settings::default();
+        settings.custom_mod_sites.push(CustomModSite {
+            id: "moddb".to_string(),
+            name: "ModDB".to_string(),
+            url: "https://www.moddb.com".to_string(),
+        });
+        save(dir.path(), &settings).unwrap();
+        assert_eq!(load(dir.path()).unwrap(), settings);
+    }
+
+    #[test]
+    fn save_rejects_invalid_custom_mod_sites() {
+        let dir = tempdir().unwrap();
+        let mut settings = Settings::default();
+        settings.custom_mod_sites.push(CustomModSite {
+            id: "bad".to_string(),
+            name: "Bad".to_string(),
+            url: "javascript:alert(1)".to_string(),
+        });
+        assert!(matches!(
+            save(dir.path(), &settings),
+            Err(SettingsError::Validation(_))
+        ));
+        // And nothing should have been written.
+        assert!(!dir.path().join("settings.json").exists());
     }
 
     #[test]

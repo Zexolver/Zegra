@@ -194,16 +194,23 @@ function arrayToLines(arr) {
   return (arr || []).join("\n");
 }
 
+// The last-loaded/saved settings, kept around so the Mods tab can render
+// tabs for the user's custom sites without an extra round-trip every time.
+let cachedSettings = null;
+
 async function loadSettingsIntoForm() {
   if (!hasBackend) return;
   try {
     const settings = await invoke("get_settings");
+    cachedSettings = settings;
     $("#itchio-api-key").value = settings.itchio_api_key || "";
     $("#nexus-api-key").value = settings.nexus_api_key || "";
     $("#custom-theme-path").value = settings.custom_theme_path || "";
     $("#extra-steam-roots").value = arrayToLines(settings.extra_steam_roots);
     $("#extra-gog-roots").value = arrayToLines(settings.extra_gog_roots);
     $("#extra-legendary-paths").value = arrayToLines(settings.extra_legendary_paths);
+    renderCustomModSitesList(settings.custom_mod_sites || []);
+    renderModSiteTabs();
   } catch (err) {
     setSettingsStatus(`Failed to load settings: ${err}`, true);
   }
@@ -217,6 +224,7 @@ function readSettingsFromForm() {
     extra_steam_roots: linesToArray($("#extra-steam-roots").value),
     extra_gog_roots: linesToArray($("#extra-gog-roots").value),
     extra_legendary_paths: linesToArray($("#extra-legendary-paths").value),
+    custom_mod_sites: (cachedSettings && cachedSettings.custom_mod_sites) || [],
   };
 }
 
@@ -236,10 +244,148 @@ async function saveSettings(event) {
   const settings = readSettingsFromForm();
   try {
     await invoke("save_settings", { settings });
+    cachedSettings = settings;
     setSettingsStatus("Settings saved.", false);
   } catch (err) {
     setSettingsStatus(`Failed to save settings: ${err}`, true);
   }
+}
+
+// ---------- Custom mod sites (Settings) ----------
+
+const BUILT_IN_MOD_SITES = [
+  { id: "nexusmods", name: "Nexus Mods" },
+  { id: "curseforge", name: "CurseForge" },
+];
+
+function slugify(name) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Returns a unique slug for `name`, avoiding collisions with built-in ids and any already-taken id in `takenIds`. */
+function uniqueModSiteId(name, takenIds) {
+  const base = slugify(name) || "site";
+  if (!takenIds.has(base)) return base;
+  let n = 2;
+  while (takenIds.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
+function setModSitesStatus(msg, isError) {
+  const el = $("#mod-sites-status");
+  el.textContent = msg;
+  el.classList.toggle("status-error", !!isError);
+  el.classList.toggle("status-ok", !isError);
+}
+
+function renderCustomModSitesList(customSites) {
+  const list = $("#custom-mod-sites-list");
+  list.innerHTML = "";
+  if (customSites.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "hint";
+    empty.textContent = "No custom sites added yet.";
+    list.appendChild(empty);
+    return;
+  }
+  customSites.forEach((site) => {
+    const row = document.createElement("div");
+    row.className = "custom-mod-site-row";
+
+    const name = document.createElement("span");
+    name.className = "custom-mod-site-name";
+    name.textContent = site.name;
+
+    const url = document.createElement("span");
+    url.className = "custom-mod-site-url";
+    url.textContent = site.url;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-small";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => removeCustomModSite(site.id));
+
+    row.append(name, url, removeBtn);
+    list.appendChild(row);
+  });
+}
+
+async function persistCustomModSites(customSites) {
+  const settings = { ...readSettingsFromForm(), custom_mod_sites: customSites };
+  await invoke("save_settings", { settings });
+  cachedSettings = settings;
+  renderCustomModSitesList(customSites);
+  renderModSiteTabs();
+}
+
+async function addCustomModSite() {
+  const nameInput = $("#new-mod-site-name");
+  const urlInput = $("#new-mod-site-url");
+  const name = nameInput.value.trim();
+  let url = urlInput.value.trim();
+
+  if (!hasBackend) {
+    setModSitesStatus("Cannot add a site — no backend available in this preview.", true);
+    return;
+  }
+  if (!name) {
+    setModSitesStatus("Enter a name for the site.", true);
+    return;
+  }
+  // Reject anything that already specifies a non-http(s) scheme (javascript:,
+  // file:, nxm:, etc) up front, before the bare-domain convenience below
+  // would otherwise turn e.g. "javascript:alert(1)" into the
+  // superficially-valid-looking "https://javascript:alert(1)".
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^https?:\/\//i.test(url)) {
+    setModSitesStatus("Enter a valid http:// or https:// URL.", true);
+    return;
+  }
+  if (url && !/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  if (!/^https?:\/\/.+/i.test(url)) {
+    setModSitesStatus("Enter a valid http:// or https:// URL.", true);
+    return;
+  }
+
+  const existing = (cachedSettings && cachedSettings.custom_mod_sites) || [];
+  const takenIds = new Set([
+    ...BUILT_IN_MOD_SITES.map((s) => s.id),
+    ...existing.map((s) => s.id),
+  ]);
+  const id = uniqueModSiteId(name, takenIds);
+  const updated = [...existing, { id, name, url }];
+
+  try {
+    await persistCustomModSites(updated);
+    nameInput.value = "";
+    urlInput.value = "";
+    setModSitesStatus(`Added ${name}.`, false);
+  } catch (err) {
+    setModSitesStatus(`Failed to add site: ${err}`, true);
+  }
+}
+
+async function removeCustomModSite(id) {
+  const existing = (cachedSettings && cachedSettings.custom_mod_sites) || [];
+  const updated = existing.filter((s) => s.id !== id);
+  try {
+    await persistCustomModSites(updated);
+    setModSitesStatus("Site removed.", false);
+  } catch (err) {
+    setModSitesStatus(`Failed to remove site: ${err}`, true);
+  }
+}
+
+/** All mod sites (built-in + the user's custom ones) available for the Mods tab's tab bar. */
+function allModSites() {
+  const custom = (cachedSettings && cachedSettings.custom_mod_sites) || [];
+  return [...BUILT_IN_MOD_SITES, ...custom.map((s) => ({ id: s.id, name: s.name }))];
 }
 
 // ---------- Theme ----------
@@ -285,15 +431,17 @@ function resetTheme() {
 
 // ---------- Mods ----------
 
-const MOD_SITE_LABELS = { nexusmods: "Nexus Mods", curseforge: "CurseForge" };
-
-// Which mod site (if any) is currently shown in the embedded webview, and
-// which ones have already finished loading once this session — so
-// switching back to a site already visited shows instantly, with no loading
-// overlay flash, since the backend just re-shows the same live webview
-// instead of navigating it again.
+// Which mod site (if any) is currently shown, and which ones have already
+// finished loading once this session — so switching back to a site already
+// visited shows instantly, with no "Opening…" flash, since the backend just
+// re-shows/repositions the same live window instead of navigating it again.
 let activeModSite = null;
 const modSitesLoadedOnce = new Set();
+
+function modSiteLabel(id) {
+  const site = allModSites().find((s) => s.id === id);
+  return site ? site.name : id;
+}
 
 function logNxmEvent(message, isError) {
   const log = $("#nxm-log");
@@ -310,16 +458,44 @@ function setNxmStatus(msg, isError) {
   el.classList.toggle("status-ok", !isError);
 }
 
+/** (Re)builds the Nexus Mods / CurseForge / custom-site tab buttons from `allModSites()`. */
+function renderModSiteTabs() {
+  const container = $("#mod-site-tabs");
+  container.innerHTML = "";
+  allModSites().forEach((site) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mod-site-tab";
+    btn.dataset.site = site.id;
+    btn.setAttribute("role", "tab");
+    btn.textContent = site.name;
+    btn.classList.toggle("active", site.id === activeModSite);
+    btn.addEventListener("click", () => showModSite(site.id));
+    container.appendChild(btn);
+  });
+}
+
+/** The on-screen size of the Mods tab's placeholder area, in logical (CSS) pixels — used to size the companion window to roughly match it. */
+function modsContainerSize() {
+  const rect = $("#mods-webview-container").getBoundingClientRect();
+  return { width: rect.width, height: rect.height };
+}
+
 /**
  * Shows `site` in its own window (creating it the first time, otherwise just
  * re-showing/focusing the same one), so switching sites is instant and each
- * site's logged-in session is preserved across visits. This is a real,
- * separate OS window rather than content embedded pixel-for-pixel inside the
- * Mods tab: on Linux, Tauri's child-webview positioning API turned out not
- * to be reliably controllable (see `API-Implementation.md` for what testing
- * that revealed), so a parented companion window is the honest, actually-
- * working way to deliver "no popup-juggling, one click, remembers where you
- * left off" here.
+ * site's logged-in session is preserved across visits.
+ *
+ * This is a real, separate OS window rather than content embedded pixel-for
+ * -pixel inside the Mods tab: on Linux, Tauri's child-webview positioning
+ * API turned out not to be reliably controllable (see
+ * `API-Implementation.md` for what testing that revealed). To still feel
+ * like part of the same app, the window is undecorated and sized to roughly
+ * match the Mods tab's placeholder area; `initModSiteTrackingListener` keeps
+ * it sized to that as Zegra's own window resizes. Pinning its on-screen
+ * *position* to the placeholder turned out not to be achievable — see the
+ * backend command's doc comment and `API-Implementation.md` for why — so the
+ * window manager places it, same as any other window.
  */
 async function showModSite(site) {
   activeModSite = site;
@@ -330,7 +506,7 @@ async function showModSite(site) {
 
   const unavailableMsg = $("#mods-embed-unavailable-msg");
   const status = $("#mods-status");
-  const label = MOD_SITE_LABELS[site] || site;
+  const label = modSiteLabel(site);
 
   if (!hasBackend) {
     unavailableMsg.classList.remove("hidden");
@@ -340,16 +516,17 @@ async function showModSite(site) {
   unavailableMsg.classList.add("hidden");
   status.classList.remove("hidden");
   status.textContent = modSitesLoadedOnce.has(site)
-    ? `${label} is open in its own window.`
+    ? `${label} is open.`
     : `Opening ${label}…`;
 
+  const { width, height } = modsContainerSize();
   try {
-    await invoke("set_active_mod_site", { site });
+    await invoke("set_active_mod_site", { site, width, height });
     modSitesLoadedOnce.add(site);
     // Outside the real desktop runtime there's no "mod-site-loaded" event to
     // wait for (see initModSiteLoadListener), so just settle the status now.
     if (!TAURI) {
-      status.textContent = `${label} is open in its own window.`;
+      status.textContent = `${label} is open.`;
     }
   } catch (err) {
     setNxmStatus(`Failed to open ${label}: ${err}`, true);
@@ -361,10 +538,17 @@ async function showModSite(site) {
 async function hideAllModSites() {
   if (!hasBackend) return;
   try {
-    await invoke("set_active_mod_site", { site: null });
+    await invoke("set_active_mod_site", { site: null, width: 0, height: 0 });
   } catch {
     // Best-effort: nothing the user can act on if this fails.
   }
+}
+
+/** Re-sends the current site's placeholder size so the companion window stays roughly the same size — called on window resize. */
+function resizeActiveModSiteIfVisible() {
+  if (currentView !== "mods" || !activeModSite || !hasBackend) return;
+  const { width, height } = modsContainerSize();
+  invoke("set_active_mod_site", { site: activeModSite, width, height }).catch(() => {});
 }
 
 /** Updates the status line once the real window reports its page finished loading. */
@@ -372,9 +556,28 @@ function initModSiteLoadListener() {
   if (!TAURI) return;
   TAURI.event.listen("mod-site-loaded", (event) => {
     if (event.payload === activeModSite) {
-      $("#mods-status").textContent = `${MOD_SITE_LABELS[event.payload] || event.payload} is open in its own window.`;
+      $("#mods-status").textContent = `${modSiteLabel(event.payload)} is open.`;
     }
   });
+}
+
+/**
+ * Keeps the companion mod-site window sized to roughly match its placeholder
+ * area as Zegra's own window resizes. Safe to listen on the generic scale
+ * here (unlike the earlier true-inline-embedding attempt): the companion
+ * window is a fully independent top-level window now, not a child widget
+ * inside Zegra's own window, so resizing it can't itself trigger a resize of
+ * Zegra's window and cause a feedback loop.
+ */
+function initModSiteTrackingListener() {
+  if (!TAURI) return;
+  let debounceHandle = null;
+  const scheduleResize = () => {
+    clearTimeout(debounceHandle);
+    debounceHandle = setTimeout(resizeActiveModSiteIfVisible, 100);
+  };
+  const win = TAURI.window.getCurrentWindow();
+  win.onResized(scheduleResize);
 }
 
 async function openDownloadsFolder() {
@@ -426,6 +629,7 @@ function initNxmEventListener() {
 // ---------- Wiring ----------
 
 function init() {
+  renderModSiteTabs(); // built-ins immediately; re-rendered with custom sites once settings load
   initTabs();
   initRuntimeBadge();
   $("#scan-btn").addEventListener("click", scanLibrary);
@@ -433,15 +637,14 @@ function init() {
   $("#settings-form").addEventListener("submit", saveSettings);
   $("#apply-theme-btn").addEventListener("click", applyCustomTheme);
   $("#reset-theme-btn").addEventListener("click", resetTheme);
-  $all(".mod-site-tab").forEach((tab) => {
-    tab.addEventListener("click", () => showModSite(tab.dataset.site));
-  });
+  $("#add-mod-site-btn").addEventListener("click", addCustomModSite);
   $("#open-downloads-btn").addEventListener("click", openDownloadsFolder);
   $("#resolve-nxm-btn").addEventListener("click", resolveNxmLink);
   loadSettingsIntoForm();
   applySavedThemeOnStartup();
   initNxmEventListener();
   initModSiteLoadListener();
+  initModSiteTrackingListener();
 }
 
 window.addEventListener("DOMContentLoaded", init);

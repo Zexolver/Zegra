@@ -265,3 +265,20 @@ nav li.active {
   background-color: var(--surface-color);
   border-left: 4px solid var(--danger-color);
 }
+
+.custom-mod-site-row {
+  background-color: var(--bg-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-mod-site-row .custom-mod-site-url {
+  color: var(--text-muted);
+}
+
+.custom-mod-site-add input {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 0.5rem;
+}

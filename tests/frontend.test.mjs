@@ -279,7 +279,7 @@ test("Mods tab: entering it auto-opens Nexus Mods, with no extra click needed", 
     assert.equal(firstCall.args.site, "nexusmods");
 
     const status = await page.textContent("#mods-status");
-    assert.match(status, /Nexus Mods is open in its own window/);
+    assert.match(status, /Nexus Mods is open/);
   });
 });
 
@@ -426,6 +426,113 @@ test("Mods tab: resolving with an empty link shows an error without calling the 
       window.__zegraMockCalls.filter((c) => c.cmd === "resolve_and_open_nxm_link")
     );
     assert.equal(calls.length, 0);
+  });
+});
+
+test("Settings: adding a custom mod site saves it and adds a Mods tab", async (t) => {
+  const initScript = mockInvokeInitScript({
+    settings: { ...FIXTURE_SETTINGS, custom_mod_sites: [] },
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="settings"]');
+    await page.waitForFunction(() => document.querySelector("#itchio-api-key").value.length > 0);
+
+    await page.fill("#new-mod-site-name", "ModDB");
+    await page.fill("#new-mod-site-url", "www.moddb.com");
+    await page.click("#add-mod-site-btn");
+
+    await page.waitForFunction(() =>
+      document.getElementById("mod-sites-status").textContent.includes("Added ModDB")
+    );
+
+    const savedSites = await page.evaluate(() => {
+      const calls = window.__zegraMockCalls.filter((c) => c.cmd === "save_settings");
+      return calls[calls.length - 1].args.settings.custom_mod_sites;
+    });
+    assert.deepEqual(savedSites, [{ id: "moddb", name: "ModDB", url: "https://www.moddb.com" }]);
+
+    const rowText = await page.textContent("#custom-mod-sites-list");
+    assert.match(rowText, /ModDB/);
+    assert.match(rowText, /moddb\.com/);
+
+    // And it shows up as its own tab on the Mods page.
+    await page.click('nav li[data-view="mods"]');
+    assert.equal(await page.locator('.mod-site-tab[data-site="moddb"]').count(), 1);
+    assert.equal(await page.locator('.mod-site-tab[data-site="moddb"]').textContent(), "ModDB");
+  });
+});
+
+test("Settings: removing a custom mod site removes its tab", async (t) => {
+  const initScript = mockInvokeInitScript({
+    settings: {
+      ...FIXTURE_SETTINGS,
+      custom_mod_sites: [{ id: "moddb", name: "ModDB", url: "https://www.moddb.com" }],
+    },
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="settings"]');
+    await page.waitForFunction(() =>
+      document.getElementById("custom-mod-sites-list").textContent.includes("ModDB")
+    );
+
+    await page.click("#custom-mod-sites-list button");
+    await page.waitForFunction(() =>
+      document.getElementById("mod-sites-status").textContent.includes("removed")
+    );
+
+    const savedSites = await page.evaluate(() => {
+      const calls = window.__zegraMockCalls.filter((c) => c.cmd === "save_settings");
+      return calls[calls.length - 1].args.settings.custom_mod_sites;
+    });
+    assert.deepEqual(savedSites, []);
+
+    await page.click('nav li[data-view="mods"]');
+    assert.equal(await page.locator('.mod-site-tab[data-site="moddb"]').count(), 0);
+  });
+});
+
+test("Settings: adding a mod site with a non-http(s) URL is rejected client-side", async (t) => {
+  const initScript = mockInvokeInitScript({
+    settings: { ...FIXTURE_SETTINGS, custom_mod_sites: [] },
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="settings"]');
+    await page.waitForFunction(() => document.querySelector("#itchio-api-key").value.length > 0);
+
+    await page.fill("#new-mod-site-name", "Bad");
+    await page.fill("#new-mod-site-url", "javascript:alert(1)");
+    await page.click("#add-mod-site-btn");
+
+    const status = await page.textContent("#mod-sites-status");
+    assert.match(status, /valid http/);
+    const saveCalls = await page.evaluate(() =>
+      window.__zegraMockCalls.filter((c) => c.cmd === "save_settings")
+    );
+    assert.equal(saveCalls.length, 0);
+  });
+});
+
+test("Mods tab: clicking a custom site's tab opens it by id", async (t) => {
+  const initScript = mockInvokeInitScript({
+    settings: {
+      ...FIXTURE_SETTINGS,
+      custom_mod_sites: [{ id: "gamebanana", name: "GameBanana", url: "https://gamebanana.com" }],
+    },
+  });
+  await withPage(t, initScript, async (page) => {
+    await page.click('nav li[data-view="mods"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === "nexusmods")
+    );
+
+    await page.click('.mod-site-tab[data-site="gamebanana"]');
+    await page.waitForFunction(() =>
+      window.__zegraMockCalls.some((c) => c.cmd === "set_active_mod_site" && c.args.site === "gamebanana")
+    );
+    assert.match(
+      await page.locator('.mod-site-tab[data-site="gamebanana"]').getAttribute("class"),
+      /active/
+    );
   });
 });
 

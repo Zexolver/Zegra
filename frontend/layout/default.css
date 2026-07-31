@@ -83,6 +83,47 @@ body {
   font-family: inherit;
 }
 
+.custom-mod-sites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.custom-mod-site-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--border-radius, 8px);
+}
+
+.custom-mod-site-row .custom-mod-site-name {
+  font-weight: bold;
+}
+
+.custom-mod-site-row .custom-mod-site-url {
+  flex: 1;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-mod-site-add {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.custom-mod-site-add input[type="text"] {
+  width: auto;
+  flex: 1;
+  min-width: 160px;
+  margin: 0;
+}
+
 .settings-actions {
   display: flex;
   align-items: center;

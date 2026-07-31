@@ -55,10 +55,9 @@ normal browser tab — no scraping, no unofficial API, no partnership needed for
 verified live: the window genuinely loads `www.nexusmods.com` (Cloudflare bot-check and all, since
 it's real browser traffic hitting the real site).
 
-That window is a separate, real OS window — parented to Zegra's main window via
-`WebviewWindowBuilder::parent()` — rather than content embedded pixel-for-pixel inside the Mods
-tab. That distinction matters and was a deliberate course-correction made *during* this work: the
-first implementation tried true inline embedding via Tauri's child-webview API
+That window is a separate, real OS window rather than content embedded pixel-for-pixel inside the
+Mods tab. That distinction matters and was a deliberate course-correction made *during* this work:
+the first implementation tried true inline embedding via Tauri's child-webview API
 (`Window::add_child`, gated behind the `unstable` cargo feature), and hands-on testing under Xvfb
 showed it doesn't work as hoped on Linux. Tracing through `tauri-runtime-wry`'s GTK backend
 (`default_vbox()` in `tauri-runtime-wry`, and `add_to_container` in `wry`) shows that on Linux,
@@ -69,10 +68,37 @@ never uses one for this. In practice this meant the "embedded" browser ended up 
 the rest of the UI via box-packing (full window width, an arbitrary height, position always
 `(0, 0)`) instead of sitting inside the small placeholder area it was supposed to cover — confirmed
 by logging the webview's actual settled bounds and comparing them to what was requested. Given that,
-a parented companion window is the honest, actually-working way to deliver the UX goal (one click,
-no popup-juggling, remembers where you left off) on this platform today; see `commands.rs` for the
+a companion window is the honest, actually-working way to deliver the UX goal (one click, no
+popup-juggling, remembers where you left off) on this platform today; see `commands.rs` for the
 `set_active_mod_site` command and `main.js`'s Mods section for the tab-switching/auto-open logic
 built around it.
+
+**A second, separate limitation surfaced trying to make that companion window track the Mods tab's
+on-screen position** (not just its size), to make it feel visually pinned in place over the
+placeholder as if it were embedded. This was bisected extensively, in both a bare Xvfb session and
+under a real window manager (Openbox, installed specifically to rule out "no WM present" as a
+confound):
+
+- Passing `.position(x, y)` to `WebviewWindowBuilder` at window-creation time reliably left
+  WebKitGTK's surface completely unpainted (solid black), regardless of the coordinates, the window
+  size, decorations on/off, or whether a window manager was running.
+- Calling `window.set_position()` on an already-shown window (e.g. to re-track the placeholder after
+  the user moved/resized Zegra's main window) did *not* turn the content black, but silently had no
+  effect at all — the window simply stayed wherever it was, confirmed by reading back its geometry
+  with `xdotool` before and after the call.
+- Parenting the window to the main window via `.parent()` made this worse, not better: once a window
+  is `WM_TRANSIENT_FOR` another, Openbox's own placement policy for transient windows overrides
+  explicit repositioning, so removing `.parent()` was necessary but not sufficient on its own.
+- The one configuration that reliably renders correctly in every environment tested is: no
+  `.position()` anywhere, ever. Sizing (`.inner_size()` / `set_size()`) works fine and is used to
+  keep the window roughly matched to the placeholder's dimensions; on-screen *placement* is left
+  entirely to the window manager, same as any other window.
+
+Net effect: the companion window is undecorated, hidden from the taskbar, sized to match the Mods
+tab's placeholder, and reused across visits (instant switching, sessions preserved) — but it is not
+pixel-locked to the placeholder's position the way the original "feels like one seamless app" goal
+envisioned. That specific piece of polish hit a real WebKitGTK/GTK limitation rather than a Zegra
+bug; the size-only version is the honest tradeoff shipped here.
 
 The one real wrinkle is specific to Nexus Mods: its "Mod Manager Download" buttons emit
 `nxm://{game_domain}/mods/{mod_id}/files/{file_id}?key={key}&expires={expires}&user_id={user_id}`

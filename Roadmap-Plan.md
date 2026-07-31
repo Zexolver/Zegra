@@ -23,17 +23,24 @@
 
 ## V2 — Modding support
 
-- [x] Nexus Mods + CurseForge browsing/downloading, via a companion Tauri window (parented to the
-      main window) pointed at the real sites — no API partnership needed, verified live (the window
-      genuinely loads nexusmods.com). Opens automatically on entering the Mods tab and remembers the
-      last site used; true inline (pixel-embedded) browsing was attempted first but found not to
-      work on Linux — see `API-Implementation.md`
+- [x] Nexus Mods + CurseForge browsing/downloading, via a companion Tauri window pointed at the real
+      sites — no API partnership needed, verified live (the window genuinely loads nexusmods.com).
+      Opens automatically on entering the Mods tab and remembers the last site used; true inline
+      (pixel-embedded) browsing was attempted first but found not to work on Linux, and pixel-locking
+      the companion window's *position* to the Mods tab placeholder was attempted next and also found
+      not to work reliably (WebKitGTK rendered a black surface, or the window manager silently
+      ignored the reposition) — see `API-Implementation.md` for both investigations. The window is
+      sized to match the placeholder and reused across visits, just not locked to its exact position.
 - [x] `nxm://` link handling (Nexus Mods' "Mod Manager Download" buttons): OS protocol registration
       via `tauri-plugin-deep-link` + `tauri-plugin-single-instance`, resolved into real download
       URLs via the documented Nexus Mods API with a personal API key — resolution verified live
       against the real API; OS-level scheme registration itself couldn't be exercised in this
       sandboxed container (no persistent desktop session, no `xdg-mime`) — see
       `API-Implementation.md`
+- [x] Custom mod sites: Settings lets you add any other modding website (name + `http(s)://` URL),
+      validated against scheme injection (`javascript:`, `file:`, `nxm:`, etc. rejected client- and
+      server-side), each getting its own Mods tab alongside Nexus Mods/CurseForge with the same
+      companion-window behavior
 - [ ] Plugin API for the launcher (not started)
 
 ## V2.5 — Minecraft

@@ -60,10 +60,7 @@
       <!-- Mods view -->
       <section class="view mods-view hidden" id="view-mods" data-view-panel="mods">
         <div class="mods-toolbar">
-          <div class="mod-site-tabs" role="tablist">
-            <button type="button" class="mod-site-tab" data-site="nexusmods" role="tab">Nexus Mods</button>
-            <button type="button" class="mod-site-tab" data-site="curseforge" role="tab">CurseForge</button>
-          </div>
+          <div class="mod-site-tabs" id="mod-site-tabs" role="tablist"></div>
           <div class="mods-toolbar-actions">
             <button type="button" id="open-downloads-btn" class="btn btn-small">Downloads folder</button>
             <details class="mods-advanced">
@@ -124,6 +121,22 @@
               </span>
             </label>
             <input type="password" id="nexus-api-key" name="nexus_api_key" autocomplete="off" />
+          </fieldset>
+
+          <fieldset>
+            <legend>Custom mod sites</legend>
+            <p class="hint">
+              Nexus Mods and CurseForge are built in — add any other modding site here (ModDB,
+              GameBanana, Thunderstore, Modrinth, or anything else) and it shows up as its own tab
+              on the Mods page. Only <code>http://</code>/<code>https://</code> sites are allowed.
+            </p>
+            <div id="custom-mod-sites-list" class="custom-mod-sites-list"></div>
+            <div class="custom-mod-site-add">
+              <input type="text" id="new-mod-site-name" placeholder="Name (e.g. ModDB)" />
+              <input type="text" id="new-mod-site-url" placeholder="https://www.moddb.com" />
+              <button type="button" id="add-mod-site-btn" class="btn btn-small">Add site</button>
+            </div>
+            <span id="mod-sites-status" class="status-msg" role="status"></span>
           </fieldset>
 
           <fieldset>
